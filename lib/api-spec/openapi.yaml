@@ -1,22 +1,32 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: PlatePair API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User operations
+  - name: groups
+    description: Group operations
+  - name: meals
+    description: Meal post operations
+  - name: videos
+    description: Cooking hack video operations
+  - name: feed
+    description: Feed operations
+  - name: engagement
+    description: Likes, saves, comments
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +34,621 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # USERS
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserBody"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{userId}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get a user by ID
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{userId}/stats:
+    get:
+      operationId: getUserStats
+      tags: [users]
+      summary: Get user activity stats
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserStats"
+
+  # GROUPS
+  /groups:
+    get:
+      operationId: listGroups
+      tags: [groups]
+      summary: List all public groups
+      responses:
+        "200":
+          description: List of groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+    post:
+      operationId: createGroup
+      tags: [groups]
+      summary: Create a group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupBody"
+      responses:
+        "201":
+          description: Created group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+
+  /groups/{groupId}:
+    get:
+      operationId: getGroup
+      tags: [groups]
+      summary: Get a group by ID
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Group found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+
+  /groups/{groupId}/members:
+    get:
+      operationId: listGroupMembers
+      tags: [groups]
+      summary: List members of a group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupMember"
+    post:
+      operationId: joinGroup
+      tags: [groups]
+      summary: Join a group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinGroupBody"
+      responses:
+        "201":
+          description: Joined group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMember"
+
+  /groups/{groupId}/stats:
+    get:
+      operationId: getGroupStats
+      tags: [groups]
+      summary: Get group activity stats
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Group stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupStats"
+
+  /users/{userId}/groups:
+    get:
+      operationId: getUserGroups
+      tags: [groups]
+      summary: Get groups a user belongs to
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User's groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+
+  # MEALS
+  /meals:
+    get:
+      operationId: listMeals
+      tags: [meals]
+      summary: List meals
+      parameters:
+        - name: groupId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: authorId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: mealType
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: shareStatus
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of meals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MealWithAuthor"
+    post:
+      operationId: createMeal
+      tags: [meals]
+      summary: Create a meal post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMealBody"
+      responses:
+        "201":
+          description: Created meal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealWithAuthor"
+
+  /meals/{mealId}:
+    get:
+      operationId: getMeal
+      tags: [meals]
+      summary: Get a meal by ID
+      parameters:
+        - name: mealId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Meal found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealWithAuthor"
+    patch:
+      operationId: updateMeal
+      tags: [meals]
+      summary: Update a meal
+      parameters:
+        - name: mealId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMealBody"
+      responses:
+        "200":
+          description: Updated meal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MealWithAuthor"
+    delete:
+      operationId: deleteMeal
+      tags: [meals]
+      summary: Delete a meal
+      parameters:
+        - name: mealId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /meals/trending:
+    get:
+      operationId: getTrendingMeals
+      tags: [meals]
+      summary: Get trending meals (most liked/saved recently)
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trending meals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MealWithAuthor"
+
+  # VIDEOS
+  /videos:
+    get:
+      operationId: listVideos
+      tags: [videos]
+      summary: List cooking hack videos
+      parameters:
+        - name: groupId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: authorId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of videos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VideoWithAuthor"
+    post:
+      operationId: createVideo
+      tags: [videos]
+      summary: Create a cooking hack video post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVideoBody"
+      responses:
+        "201":
+          description: Created video
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoWithAuthor"
+
+  /videos/{videoId}:
+    get:
+      operationId: getVideo
+      tags: [videos]
+      summary: Get a video by ID
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Video found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoWithAuthor"
+    delete:
+      operationId: deleteVideo
+      tags: [videos]
+      summary: Delete a video
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # FEED
+  /feed:
+    get:
+      operationId: getFeed
+      tags: [feed]
+      summary: Get mixed home feed (meals + videos)
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: groupId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Feed items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedResponse"
+
+  /feed/summary:
+    get:
+      operationId: getFeedSummary
+      tags: [feed]
+      summary: Get feed summary stats (counts, active cooks, etc.)
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Feed summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedSummary"
+
+  # ENGAGEMENT
+  /reactions:
+    post:
+      operationId: toggleReaction
+      tags: [engagement]
+      summary: Toggle a like/reaction on a meal or video
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToggleReactionBody"
+      responses:
+        "200":
+          description: Reaction toggled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReactionResult"
+
+  /saves:
+    post:
+      operationId: toggleSave
+      tags: [engagement]
+      summary: Toggle save/bookmark on a meal or video
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToggleSaveBody"
+      responses:
+        "200":
+          description: Save toggled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaveResult"
+
+  /users/{userId}/saves:
+    get:
+      operationId: getUserSaves
+      tags: [engagement]
+      summary: Get saved items for a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Saved items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedItemsResponse"
+
+  /comments:
+    post:
+      operationId: createComment
+      tags: [engagement]
+      summary: Post a comment on a meal or video
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommentBody"
+      responses:
+        "201":
+          description: Created comment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+
+  /comments/{targetType}/{targetId}:
+    get:
+      operationId: listComments
+      tags: [engagement]
+      summary: List comments on a meal or video
+      parameters:
+        - name: targetType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [meal, video]
+        - name: targetId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +659,689 @@ components:
       required:
         - status
 
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        displayName:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        avatarUrl:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        locationText:
+          type: string
+          nullable: true
+        dietaryPreferences:
+          type: array
+          items:
+            type: string
+        cookingInterests:
+          type: array
+          items:
+            type: string
+        role:
+          type: string
+          enum: [user, moderator, admin]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - displayName
+        - username
+        - email
+        - dietaryPreferences
+        - cookingInterests
+        - role
+        - createdAt
+
+    CreateUserBody:
+      type: object
+      properties:
+        displayName:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        avatarUrl:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        locationText:
+          type: string
+          nullable: true
+        dietaryPreferences:
+          type: array
+          items:
+            type: string
+        cookingInterests:
+          type: array
+          items:
+            type: string
+      required:
+        - displayName
+        - username
+        - email
+
+    UpdateUserBody:
+      type: object
+      properties:
+        displayName:
+          type: string
+        bio:
+          type: string
+          nullable: true
+        locationText:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        dietaryPreferences:
+          type: array
+          items:
+            type: string
+        cookingInterests:
+          type: array
+          items:
+            type: string
+
+    UserStats:
+      type: object
+      properties:
+        userId:
+          type: integer
+        totalMeals:
+          type: integer
+        totalVideos:
+          type: integer
+        totalSaves:
+          type: integer
+        totalLikes:
+          type: integer
+        groupCount:
+          type: integer
+        joinedAt:
+          type: string
+          format: date-time
+      required:
+        - userId
+        - totalMeals
+        - totalVideos
+        - totalSaves
+        - totalLikes
+        - groupCount
+        - joinedAt
+
+    Group:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+          nullable: true
+        coverImageUrl:
+          type: string
+          nullable: true
+        visibility:
+          type: string
+          enum: [public, private, invite_only]
+        createdById:
+          type: integer
+        memberCount:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - slug
+        - visibility
+        - createdById
+        - memberCount
+        - tags
+        - createdAt
+
+    CreateGroupBody:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+          nullable: true
+        coverImageUrl:
+          type: string
+          nullable: true
+        visibility:
+          type: string
+          enum: [public, private, invite_only]
+        createdById:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+        - name
+        - slug
+        - createdById
+
+    GroupMember:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        groupId:
+          type: integer
+        role:
+          type: string
+          enum: [member, moderator, admin]
+        joinedAt:
+          type: string
+          format: date-time
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - id
+        - userId
+        - groupId
+        - role
+        - joinedAt
+        - user
+
+    JoinGroupBody:
+      type: object
+      properties:
+        userId:
+          type: integer
+        role:
+          type: string
+          enum: [member, moderator, admin]
+      required:
+        - userId
+
+    GroupStats:
+      type: object
+      properties:
+        groupId:
+          type: integer
+        memberCount:
+          type: integer
+        totalMeals:
+          type: integer
+        totalVideos:
+          type: integer
+        activeCooks:
+          type: integer
+        recentActivity:
+          type: integer
+      required:
+        - groupId
+        - memberCount
+        - totalMeals
+        - totalVideos
+        - activeCooks
+        - recentActivity
+
+    Meal:
+      type: object
+      properties:
+        id:
+          type: integer
+        authorId:
+          type: integer
+        groupId:
+          type: integer
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        mealType:
+          type: string
+          enum: [breakfast, lunch, dinner, snack, dessert, brunch, other]
+        cuisineTags:
+          type: array
+          items:
+            type: string
+        dietaryTags:
+          type: array
+          items:
+            type: string
+        imageUrl:
+          type: string
+          nullable: true
+        servings:
+          type: integer
+          nullable: true
+        shareStatus:
+          type: string
+          enum: [idea, cooking, available, finished]
+        locationText:
+          type: string
+          nullable: true
+        ingredientsSummary:
+          type: string
+          nullable: true
+        instructionsSummary:
+          type: string
+          nullable: true
+        likeCount:
+          type: integer
+        saveCount:
+          type: integer
+        commentCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - authorId
+        - title
+        - mealType
+        - cuisineTags
+        - dietaryTags
+        - shareStatus
+        - likeCount
+        - saveCount
+        - commentCount
+        - createdAt
+
+    MealWithAuthor:
+      allOf:
+        - $ref: "#/components/schemas/Meal"
+        - type: object
+          properties:
+            author:
+              $ref: "#/components/schemas/User"
+            group:
+              $ref: "#/components/schemas/Group"
+              nullable: true
+          required:
+            - author
+
+    CreateMealBody:
+      type: object
+      properties:
+        authorId:
+          type: integer
+        groupId:
+          type: integer
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        mealType:
+          type: string
+          enum: [breakfast, lunch, dinner, snack, dessert, brunch, other]
+        cuisineTags:
+          type: array
+          items:
+            type: string
+        dietaryTags:
+          type: array
+          items:
+            type: string
+        imageUrl:
+          type: string
+          nullable: true
+        servings:
+          type: integer
+          nullable: true
+        shareStatus:
+          type: string
+          enum: [idea, cooking, available, finished]
+        locationText:
+          type: string
+          nullable: true
+        ingredientsSummary:
+          type: string
+          nullable: true
+        instructionsSummary:
+          type: string
+          nullable: true
+      required:
+        - authorId
+        - title
+        - mealType
+
+    UpdateMealBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        mealType:
+          type: string
+          enum: [breakfast, lunch, dinner, snack, dessert, brunch, other]
+        cuisineTags:
+          type: array
+          items:
+            type: string
+        dietaryTags:
+          type: array
+          items:
+            type: string
+        imageUrl:
+          type: string
+          nullable: true
+        servings:
+          type: integer
+          nullable: true
+        shareStatus:
+          type: string
+          enum: [idea, cooking, available, finished]
+        locationText:
+          type: string
+          nullable: true
+        ingredientsSummary:
+          type: string
+          nullable: true
+        instructionsSummary:
+          type: string
+          nullable: true
+
+    Video:
+      type: object
+      properties:
+        id:
+          type: integer
+        authorId:
+          type: integer
+        linkedMealId:
+          type: integer
+          nullable: true
+        groupId:
+          type: integer
+          nullable: true
+        title:
+          type: string
+        caption:
+          type: string
+          nullable: true
+        videoUrl:
+          type: string
+          nullable: true
+        thumbnailUrl:
+          type: string
+          nullable: true
+        durationSeconds:
+          type: integer
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        likeCount:
+          type: integer
+        saveCount:
+          type: integer
+        commentCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - authorId
+        - title
+        - tags
+        - likeCount
+        - saveCount
+        - commentCount
+        - createdAt
+
+    VideoWithAuthor:
+      allOf:
+        - $ref: "#/components/schemas/Video"
+        - type: object
+          properties:
+            author:
+              $ref: "#/components/schemas/User"
+            group:
+              $ref: "#/components/schemas/Group"
+              nullable: true
+            linkedMeal:
+              $ref: "#/components/schemas/Meal"
+              nullable: true
+          required:
+            - author
+
+    CreateVideoBody:
+      type: object
+      properties:
+        authorId:
+          type: integer
+        linkedMealId:
+          type: integer
+          nullable: true
+        groupId:
+          type: integer
+          nullable: true
+        title:
+          type: string
+        caption:
+          type: string
+          nullable: true
+        videoUrl:
+          type: string
+          nullable: true
+        thumbnailUrl:
+          type: string
+          nullable: true
+        durationSeconds:
+          type: integer
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+        - authorId
+        - title
+
+    FeedItem:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [meal, video]
+        meal:
+          $ref: "#/components/schemas/MealWithAuthor"
+          nullable: true
+        video:
+          $ref: "#/components/schemas/VideoWithAuthor"
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - type
+        - createdAt
+
+    FeedResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeedItem"
+        total:
+          type: integer
+        hasMore:
+          type: boolean
+      required:
+        - items
+        - total
+        - hasMore
+
+    FeedSummary:
+      type: object
+      properties:
+        activeCooks:
+          type: integer
+        mealsAvailableToday:
+          type: integer
+        totalGroups:
+          type: integer
+        recentVideos:
+          type: integer
+        trendingTags:
+          type: array
+          items:
+            type: string
+      required:
+        - activeCooks
+        - mealsAvailableToday
+        - totalGroups
+        - recentVideos
+        - trendingTags
+
+    ToggleReactionBody:
+      type: object
+      properties:
+        userId:
+          type: integer
+        targetType:
+          type: string
+          enum: [meal, video]
+        targetId:
+          type: integer
+        reactionType:
+          type: string
+          enum: [like, love, yum]
+      required:
+        - userId
+        - targetType
+        - targetId
+        - reactionType
+
+    ReactionResult:
+      type: object
+      properties:
+        liked:
+          type: boolean
+        likeCount:
+          type: integer
+      required:
+        - liked
+        - likeCount
+
+    ToggleSaveBody:
+      type: object
+      properties:
+        userId:
+          type: integer
+        targetType:
+          type: string
+          enum: [meal, video]
+        targetId:
+          type: integer
+      required:
+        - userId
+        - targetType
+        - targetId
+
+    SaveResult:
+      type: object
+      properties:
+        saved:
+          type: boolean
+        saveCount:
+          type: integer
+      required:
+        - saved
+        - saveCount
+
+    SavedItemsResponse:
+      type: object
+      properties:
+        meals:
+          type: array
+          items:
+            $ref: "#/components/schemas/MealWithAuthor"
+        videos:
+          type: array
+          items:
+            $ref: "#/components/schemas/VideoWithAuthor"
+      required:
+        - meals
+        - videos
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        targetType:
+          type: string
+          enum: [meal, video]
+        targetId:
+          type: integer
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - id
+        - userId
+        - targetType
+        - targetId
+        - body
+        - createdAt
+        - user
+
+    CreateCommentBody:
+      type: object
+      properties:
+        userId:
+          type: integer
+        targetType:
+          type: string
+          enum: [meal, video]
+        targetId:
+          type: integer
+        body:
+          type: string
+      required:
+        - userId
+        - targetType
+        - targetId
+        - body
