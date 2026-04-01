@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "vnveUEJICmEL7z3oFgP_E"
+uri = "file://PLATEPAIR_BRIEF.md"
+type = "text"
+title = "PlatePair — Project Brief for New Collaborator"
