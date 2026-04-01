@@ -17,14 +17,20 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  BattleEntryWithUser,
+  BattleWithDetails,
+  CandidateScore,
   Comment,
+  CreateBattleBody,
   CreateCommentBody,
+  CreateFromContentBody,
   CreateGroupBody,
   CreateMealBody,
   CreateUserBody,
   CreateVideoBody,
   FeedResponse,
   FeedSummary,
+  GetBattleLeaderboardParams,
   GetFeedParams,
   GetFeedSummaryParams,
   GetTrendingMealsParams,
@@ -32,15 +38,23 @@ import type {
   GroupMember,
   GroupStats,
   HealthStatus,
+  JoinBattle200,
+  JoinBattleBody,
   JoinGroupBody,
+  LeaderboardEntry,
+  ListBattlesParams,
   ListMealsParams,
   ListVideosParams,
   MealWithAuthor,
   ReactionResult,
   SaveResult,
   SavedItemsResponse,
+  ScoreCandidateBody,
+  SubmitEntryBody,
   ToggleReactionBody,
   ToggleSaveBody,
+  TrackBattleInterest201,
+  TrackInterestBody,
   UpdateMealBody,
   UpdateUserBody,
   User,
@@ -2619,6 +2633,984 @@ export function useListComments<
     targetId,
     options,
   );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List battles
+ */
+export const getListBattlesUrl = (params?: ListBattlesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/battles?${stringifiedParams}`
+    : `/api/battles`;
+};
+
+export const listBattles = async (
+  params?: ListBattlesParams,
+  options?: RequestInit,
+): Promise<BattleWithDetails[]> => {
+  return customFetch<BattleWithDetails[]>(getListBattlesUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListBattlesQueryKey = (params?: ListBattlesParams) => {
+  return [`/api/battles`, ...(params ? [params] : [])] as const;
+};
+
+export const getListBattlesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listBattles>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListBattlesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listBattles>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListBattlesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listBattles>>> = ({
+    signal,
+  }) => listBattles(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listBattles>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListBattlesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listBattles>>
+>;
+export type ListBattlesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List battles
+ */
+
+export function useListBattles<
+  TData = Awaited<ReturnType<typeof listBattles>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListBattlesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listBattles>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListBattlesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a new battle
+ */
+export const getCreateBattleUrl = () => {
+  return `/api/battles`;
+};
+
+export const createBattle = async (
+  createBattleBody: CreateBattleBody,
+  options?: RequestInit,
+): Promise<BattleWithDetails> => {
+  return customFetch<BattleWithDetails>(getCreateBattleUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createBattleBody),
+  });
+};
+
+export const getCreateBattleMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createBattle>>,
+    TError,
+    { data: BodyType<CreateBattleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createBattle>>,
+  TError,
+  { data: BodyType<CreateBattleBody> },
+  TContext
+> => {
+  const mutationKey = ["createBattle"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createBattle>>,
+    { data: BodyType<CreateBattleBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createBattle(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateBattleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createBattle>>
+>;
+export type CreateBattleMutationBody = BodyType<CreateBattleBody>;
+export type CreateBattleMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a new battle
+ */
+export const useCreateBattle = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createBattle>>,
+    TError,
+    { data: BodyType<CreateBattleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createBattle>>,
+  TError,
+  { data: BodyType<CreateBattleBody> },
+  TContext
+> => {
+  return useMutation(getCreateBattleMutationOptions(options));
+};
+
+/**
+ * @summary Get a battle by ID
+ */
+export const getGetBattleUrl = (battleId: number) => {
+  return `/api/battles/${battleId}`;
+};
+
+export const getBattle = async (
+  battleId: number,
+  options?: RequestInit,
+): Promise<BattleWithDetails> => {
+  return customFetch<BattleWithDetails>(getGetBattleUrl(battleId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetBattleQueryKey = (battleId: number) => {
+  return [`/api/battles/${battleId}`] as const;
+};
+
+export const getGetBattleQueryOptions = <
+  TData = Awaited<ReturnType<typeof getBattle>>,
+  TError = ErrorType<unknown>,
+>(
+  battleId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBattle>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetBattleQueryKey(battleId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getBattle>>> = ({
+    signal,
+  }) => getBattle(battleId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!battleId,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getBattle>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetBattleQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getBattle>>
+>;
+export type GetBattleQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get a battle by ID
+ */
+
+export function useGetBattle<
+  TData = Awaited<ReturnType<typeof getBattle>>,
+  TError = ErrorType<unknown>,
+>(
+  battleId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBattle>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetBattleQueryOptions(battleId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List entries for a battle
+ */
+export const getListBattleEntriesUrl = (battleId: number) => {
+  return `/api/battles/${battleId}/entries`;
+};
+
+export const listBattleEntries = async (
+  battleId: number,
+  options?: RequestInit,
+): Promise<BattleEntryWithUser[]> => {
+  return customFetch<BattleEntryWithUser[]>(getListBattleEntriesUrl(battleId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListBattleEntriesQueryKey = (battleId: number) => {
+  return [`/api/battles/${battleId}/entries`] as const;
+};
+
+export const getListBattleEntriesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listBattleEntries>>,
+  TError = ErrorType<unknown>,
+>(
+  battleId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listBattleEntries>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListBattleEntriesQueryKey(battleId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listBattleEntries>>
+  > = ({ signal }) =>
+    listBattleEntries(battleId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!battleId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listBattleEntries>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListBattleEntriesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listBattleEntries>>
+>;
+export type ListBattleEntriesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List entries for a battle
+ */
+
+export function useListBattleEntries<
+  TData = Awaited<ReturnType<typeof listBattleEntries>>,
+  TError = ErrorType<unknown>,
+>(
+  battleId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listBattleEntries>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListBattleEntriesQueryOptions(battleId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Submit an entry for a battle
+ */
+export const getSubmitBattleEntryUrl = (battleId: number) => {
+  return `/api/battles/${battleId}/entries`;
+};
+
+export const submitBattleEntry = async (
+  battleId: number,
+  submitEntryBody: SubmitEntryBody,
+  options?: RequestInit,
+): Promise<BattleEntryWithUser> => {
+  return customFetch<BattleEntryWithUser>(getSubmitBattleEntryUrl(battleId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(submitEntryBody),
+  });
+};
+
+export const getSubmitBattleEntryMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitBattleEntry>>,
+    TError,
+    { battleId: number; data: BodyType<SubmitEntryBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitBattleEntry>>,
+  TError,
+  { battleId: number; data: BodyType<SubmitEntryBody> },
+  TContext
+> => {
+  const mutationKey = ["submitBattleEntry"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitBattleEntry>>,
+    { battleId: number; data: BodyType<SubmitEntryBody> }
+  > = (props) => {
+    const { battleId, data } = props ?? {};
+
+    return submitBattleEntry(battleId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitBattleEntryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitBattleEntry>>
+>;
+export type SubmitBattleEntryMutationBody = BodyType<SubmitEntryBody>;
+export type SubmitBattleEntryMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Submit an entry for a battle
+ */
+export const useSubmitBattleEntry = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitBattleEntry>>,
+    TError,
+    { battleId: number; data: BodyType<SubmitEntryBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof submitBattleEntry>>,
+  TError,
+  { battleId: number; data: BodyType<SubmitEntryBody> },
+  TContext
+> => {
+  return useMutation(getSubmitBattleEntryMutationOptions(options));
+};
+
+/**
+ * @summary Track user interest/intent for a battle
+ */
+export const getTrackBattleInterestUrl = (battleId: number) => {
+  return `/api/battles/${battleId}/interest`;
+};
+
+export const trackBattleInterest = async (
+  battleId: number,
+  trackInterestBody: TrackInterestBody,
+  options?: RequestInit,
+): Promise<TrackBattleInterest201> => {
+  return customFetch<TrackBattleInterest201>(
+    getTrackBattleInterestUrl(battleId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(trackInterestBody),
+    },
+  );
+};
+
+export const getTrackBattleInterestMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof trackBattleInterest>>,
+    TError,
+    { battleId: number; data: BodyType<TrackInterestBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof trackBattleInterest>>,
+  TError,
+  { battleId: number; data: BodyType<TrackInterestBody> },
+  TContext
+> => {
+  const mutationKey = ["trackBattleInterest"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof trackBattleInterest>>,
+    { battleId: number; data: BodyType<TrackInterestBody> }
+  > = (props) => {
+    const { battleId, data } = props ?? {};
+
+    return trackBattleInterest(battleId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TrackBattleInterestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof trackBattleInterest>>
+>;
+export type TrackBattleInterestMutationBody = BodyType<TrackInterestBody>;
+export type TrackBattleInterestMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Track user interest/intent for a battle
+ */
+export const useTrackBattleInterest = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof trackBattleInterest>>,
+    TError,
+    { battleId: number; data: BodyType<TrackInterestBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof trackBattleInterest>>,
+  TError,
+  { battleId: number; data: BodyType<TrackInterestBody> },
+  TContext
+> => {
+  return useMutation(getTrackBattleInterestMutationOptions(options));
+};
+
+/**
+ * @summary Join a battle (register as participant)
+ */
+export const getJoinBattleUrl = (battleId: number) => {
+  return `/api/battles/${battleId}/join`;
+};
+
+export const joinBattle = async (
+  battleId: number,
+  joinBattleBody: JoinBattleBody,
+  options?: RequestInit,
+): Promise<JoinBattle200> => {
+  return customFetch<JoinBattle200>(getJoinBattleUrl(battleId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(joinBattleBody),
+  });
+};
+
+export const getJoinBattleMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof joinBattle>>,
+    TError,
+    { battleId: number; data: BodyType<JoinBattleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof joinBattle>>,
+  TError,
+  { battleId: number; data: BodyType<JoinBattleBody> },
+  TContext
+> => {
+  const mutationKey = ["joinBattle"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof joinBattle>>,
+    { battleId: number; data: BodyType<JoinBattleBody> }
+  > = (props) => {
+    const { battleId, data } = props ?? {};
+
+    return joinBattle(battleId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type JoinBattleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof joinBattle>>
+>;
+export type JoinBattleMutationBody = BodyType<JoinBattleBody>;
+export type JoinBattleMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Join a battle (register as participant)
+ */
+export const useJoinBattle = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof joinBattle>>,
+    TError,
+    { battleId: number; data: BodyType<JoinBattleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof joinBattle>>,
+  TError,
+  { battleId: number; data: BodyType<JoinBattleBody> },
+  TContext
+> => {
+  return useMutation(getJoinBattleMutationOptions(options));
+};
+
+/**
+ * @summary Score a meal or video as a battle candidate
+ */
+export const getScoreBattleCandidateUrl = () => {
+  return `/api/battles/score-candidate`;
+};
+
+export const scoreBattleCandidate = async (
+  scoreCandidateBody: ScoreCandidateBody,
+  options?: RequestInit,
+): Promise<CandidateScore> => {
+  return customFetch<CandidateScore>(getScoreBattleCandidateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(scoreCandidateBody),
+  });
+};
+
+export const getScoreBattleCandidateMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof scoreBattleCandidate>>,
+    TError,
+    { data: BodyType<ScoreCandidateBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof scoreBattleCandidate>>,
+  TError,
+  { data: BodyType<ScoreCandidateBody> },
+  TContext
+> => {
+  const mutationKey = ["scoreBattleCandidate"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof scoreBattleCandidate>>,
+    { data: BodyType<ScoreCandidateBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return scoreBattleCandidate(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ScoreBattleCandidateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof scoreBattleCandidate>>
+>;
+export type ScoreBattleCandidateMutationBody = BodyType<ScoreCandidateBody>;
+export type ScoreBattleCandidateMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Score a meal or video as a battle candidate
+ */
+export const useScoreBattleCandidate = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof scoreBattleCandidate>>,
+    TError,
+    { data: BodyType<ScoreCandidateBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof scoreBattleCandidate>>,
+  TError,
+  { data: BodyType<ScoreCandidateBody> },
+  TContext
+> => {
+  return useMutation(getScoreBattleCandidateMutationOptions(options));
+};
+
+/**
+ * @summary Auto-generate a battle from a meal or video post
+ */
+export const getCreateBattleFromContentUrl = () => {
+  return `/api/battles/from-content`;
+};
+
+export const createBattleFromContent = async (
+  createFromContentBody: CreateFromContentBody,
+  options?: RequestInit,
+): Promise<BattleWithDetails> => {
+  return customFetch<BattleWithDetails>(getCreateBattleFromContentUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createFromContentBody),
+  });
+};
+
+export const getCreateBattleFromContentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createBattleFromContent>>,
+    TError,
+    { data: BodyType<CreateFromContentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createBattleFromContent>>,
+  TError,
+  { data: BodyType<CreateFromContentBody> },
+  TContext
+> => {
+  const mutationKey = ["createBattleFromContent"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createBattleFromContent>>,
+    { data: BodyType<CreateFromContentBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createBattleFromContent(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateBattleFromContentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createBattleFromContent>>
+>;
+export type CreateBattleFromContentMutationBody =
+  BodyType<CreateFromContentBody>;
+export type CreateBattleFromContentMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Auto-generate a battle from a meal or video post
+ */
+export const useCreateBattleFromContent = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createBattleFromContent>>,
+    TError,
+    { data: BodyType<CreateFromContentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createBattleFromContent>>,
+  TError,
+  { data: BodyType<CreateFromContentBody> },
+  TContext
+> => {
+  return useMutation(getCreateBattleFromContentMutationOptions(options));
+};
+
+/**
+ * @summary Get overall battle leaderboard
+ */
+export const getGetBattleLeaderboardUrl = (
+  params?: GetBattleLeaderboardParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/battles/leaderboard?${stringifiedParams}`
+    : `/api/battles/leaderboard`;
+};
+
+export const getBattleLeaderboard = async (
+  params?: GetBattleLeaderboardParams,
+  options?: RequestInit,
+): Promise<LeaderboardEntry[]> => {
+  return customFetch<LeaderboardEntry[]>(getGetBattleLeaderboardUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetBattleLeaderboardQueryKey = (
+  params?: GetBattleLeaderboardParams,
+) => {
+  return [`/api/battles/leaderboard`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetBattleLeaderboardQueryOptions = <
+  TData = Awaited<ReturnType<typeof getBattleLeaderboard>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetBattleLeaderboardParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBattleLeaderboard>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetBattleLeaderboardQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getBattleLeaderboard>>
+  > = ({ signal }) =>
+    getBattleLeaderboard(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getBattleLeaderboard>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetBattleLeaderboardQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getBattleLeaderboard>>
+>;
+export type GetBattleLeaderboardQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get overall battle leaderboard
+ */
+
+export function useGetBattleLeaderboard<
+  TData = Awaited<ReturnType<typeof getBattleLeaderboard>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetBattleLeaderboardParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBattleLeaderboard>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetBattleLeaderboardQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get battles a user is participating in
+ */
+export const getGetUserBattlesUrl = (userId: number) => {
+  return `/api/users/${userId}/battles`;
+};
+
+export const getUserBattles = async (
+  userId: number,
+  options?: RequestInit,
+): Promise<BattleWithDetails[]> => {
+  return customFetch<BattleWithDetails[]>(getGetUserBattlesUrl(userId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetUserBattlesQueryKey = (userId: number) => {
+  return [`/api/users/${userId}/battles`] as const;
+};
+
+export const getGetUserBattlesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getUserBattles>>,
+  TError = ErrorType<unknown>,
+>(
+  userId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getUserBattles>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetUserBattlesQueryKey(userId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserBattles>>> = ({
+    signal,
+  }) => getUserBattles(userId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!userId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getUserBattles>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetUserBattlesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getUserBattles>>
+>;
+export type GetUserBattlesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get battles a user is participating in
+ */
+
+export function useGetUserBattles<
+  TData = Awaited<ReturnType<typeof getUserBattles>>,
+  TError = ErrorType<unknown>,
+>(
+  userId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getUserBattles>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetUserBattlesQueryOptions(userId, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

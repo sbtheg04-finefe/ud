@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, Bookmark, Users, ChefHat, Clock, MapPin, Share2 } from "lucide-react";
+import { Heart, Bookmark, Users, ChefHat, Clock, MapPin, Share2, Swords } from "lucide-react";
 
 const statusColors: Record<string, string> = {
   idea: "bg-muted text-muted-foreground border-transparent",
@@ -303,6 +303,13 @@ export default function MealDetail() {
                     <span>Request a portion</span>
                   </Button>
                 )}
+
+                <Link href={`/battles/create?sourceType=meal&sourceId=${meal.id}`}>
+                  <Button variant="outline" className="w-full justify-start gap-3 rounded-xl h-12 border-primary/30 text-primary hover:bg-primary/5">
+                    <Swords size={20} />
+                    <span>Battle this dish</span>
+                  </Button>
+                </Link>
               </div>
             </div>
 

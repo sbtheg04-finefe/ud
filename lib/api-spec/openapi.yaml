@@ -21,6 +21,8 @@ tags:
     description: Feed operations
   - name: engagement
     description: Likes, saves, comments
+  - name: battles
+    description: Battle Engine — cooking challenges and tournaments
 paths:
   /healthz:
     get:
@@ -648,6 +650,278 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Comment"
+
+  # BATTLES
+  /battles:
+    get:
+      operationId: listBattles
+      tags: [battles]
+      summary: List battles
+      parameters:
+        - name: scopeType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [private, circle, local, public, global]
+        - name: battleStatus
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [draft, open, live, judging, completed, archived]
+        - name: challengeType
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: groupId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of battles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BattleWithDetails"
+    post:
+      operationId: createBattle
+      tags: [battles]
+      summary: Create a new battle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBattleBody"
+      responses:
+        "201":
+          description: Created battle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleWithDetails"
+
+  /battles/{battleId}:
+    get:
+      operationId: getBattle
+      tags: [battles]
+      summary: Get a battle by ID
+      parameters:
+        - name: battleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Battle found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleWithDetails"
+
+  /battles/{battleId}/entries:
+    get:
+      operationId: listBattleEntries
+      tags: [battles]
+      summary: List entries for a battle
+      parameters:
+        - name: battleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BattleEntryWithUser"
+    post:
+      operationId: submitBattleEntry
+      tags: [battles]
+      summary: Submit an entry for a battle
+      parameters:
+        - name: battleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitEntryBody"
+      responses:
+        "201":
+          description: Entry submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleEntryWithUser"
+
+  /battles/{battleId}/interest:
+    post:
+      operationId: trackBattleInterest
+      tags: [battles]
+      summary: Track user interest/intent for a battle
+      parameters:
+        - name: battleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackInterestBody"
+      responses:
+        "201":
+          description: Interest tracked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required:
+                  - ok
+
+  /battles/{battleId}/join:
+    post:
+      operationId: joinBattle
+      tags: [battles]
+      summary: Join a battle (register as participant)
+      parameters:
+        - name: battleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinBattleBody"
+      responses:
+        "200":
+          description: Joined successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  participantCount:
+                    type: integer
+                required:
+                  - ok
+                  - participantCount
+
+  /battles/score-candidate:
+    post:
+      operationId: scoreBattleCandidate
+      tags: [battles]
+      summary: Score a meal or video as a battle candidate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScoreCandidateBody"
+      responses:
+        "200":
+          description: Battle-worthiness score
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateScore"
+
+  /battles/from-content:
+    post:
+      operationId: createBattleFromContent
+      tags: [battles]
+      summary: Auto-generate a battle from a meal or video post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFromContentBody"
+      responses:
+        "201":
+          description: Battle generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleWithDetails"
+
+  /battles/leaderboard:
+    get:
+      operationId: getBattleLeaderboard
+      tags: [battles]
+      summary: Get overall battle leaderboard
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Leaderboard entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+
+  /users/{userId}/battles:
+    get:
+      operationId: getUserBattles
+      tags: [battles]
+      summary: Get battles a user is participating in
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User's battles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BattleWithDetails"
 
 components:
   schemas:
@@ -1345,3 +1619,447 @@ components:
         - targetType
         - targetId
         - body
+
+    Battle:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+          nullable: true
+        sourceType:
+          type: string
+          enum: [meal, video, external]
+        sourceMealId:
+          type: integer
+          nullable: true
+        sourceVideoId:
+          type: integer
+          nullable: true
+        challengeType:
+          type: string
+          enum: [solo_remake, team_battle, remix_battle, speed_battle, budget_battle, ingredient_restriction, culture_variation]
+        scopeType:
+          type: string
+          enum: [private, circle, local, public, global]
+        battleStatus:
+          type: string
+          enum: [draft, open, live, judging, completed, archived]
+        groupId:
+          type: integer
+          nullable: true
+        createdBy:
+          type: integer
+        battleWorthinessScore:
+          type: number
+        maxTeamSize:
+          type: integer
+        registrationStart:
+          type: string
+          format: date-time
+          nullable: true
+        registrationEnd:
+          type: string
+          format: date-time
+          nullable: true
+        prepStart:
+          type: string
+          format: date-time
+          nullable: true
+        submissionDeadline:
+          type: string
+          format: date-time
+          nullable: true
+        judgingEnd:
+          type: string
+          format: date-time
+          nullable: true
+        participantCount:
+          type: integer
+        entryCount:
+          type: integer
+        coverImageUrl:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - slug
+        - sourceType
+        - challengeType
+        - scopeType
+        - battleStatus
+        - createdBy
+        - battleWorthinessScore
+        - maxTeamSize
+        - participantCount
+        - entryCount
+        - createdAt
+
+    BattleRequirements:
+      type: object
+      properties:
+        id:
+          type: integer
+        battleId:
+          type: integer
+        ingredientList:
+          type: array
+          items:
+            type: string
+        optionalSubstitutions:
+          type: array
+          items:
+            type: string
+        toolList:
+          type: array
+          items:
+            type: string
+        estimatedCostMin:
+          type: integer
+          nullable: true
+        estimatedCostMax:
+          type: integer
+          nullable: true
+        estimatedTimeMinutes:
+          type: integer
+          nullable: true
+        difficultyLevel:
+          type: integer
+        dietaryNotes:
+          type: array
+          items:
+            type: string
+        regionNotes:
+          type: string
+          nullable: true
+      required:
+        - id
+        - battleId
+        - ingredientList
+        - optionalSubstitutions
+        - toolList
+        - difficultyLevel
+        - dietaryNotes
+
+    BattleWithDetails:
+      allOf:
+        - $ref: "#/components/schemas/Battle"
+        - type: object
+          properties:
+            creator:
+              $ref: "#/components/schemas/User"
+            requirements:
+              $ref: "#/components/schemas/BattleRequirements"
+              nullable: true
+            sourceMeal:
+              $ref: "#/components/schemas/MealWithAuthor"
+              nullable: true
+            sourceVideo:
+              $ref: "#/components/schemas/VideoWithAuthor"
+              nullable: true
+            topEntries:
+              type: array
+              items:
+                $ref: "#/components/schemas/BattleEntryWithUser"
+          required:
+            - creator
+
+    BattleEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        battleId:
+          type: integer
+        userId:
+          type: integer
+        teamId:
+          type: integer
+          nullable: true
+        photoUrl:
+          type: string
+          nullable: true
+        videoUrl:
+          type: string
+          nullable: true
+        caption:
+          type: string
+          nullable: true
+        journalNote:
+          type: string
+          nullable: true
+        substitutionsUsed:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [draft, submitted, approved, disqualified]
+        completionScore:
+          type: number
+        creativityScore:
+          type: number
+        presentationScore:
+          type: number
+        peerVotes:
+          type: integer
+        totalScore:
+          type: number
+        rank:
+          type: integer
+          nullable: true
+        submittedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - battleId
+        - userId
+        - substitutionsUsed
+        - status
+        - completionScore
+        - creativityScore
+        - presentationScore
+        - peerVotes
+        - totalScore
+        - submittedAt
+
+    BattleEntryWithUser:
+      allOf:
+        - $ref: "#/components/schemas/BattleEntry"
+        - type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+          required:
+            - user
+
+    CreateBattleBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        sourceType:
+          type: string
+          enum: [meal, video, external]
+        sourceMealId:
+          type: integer
+          nullable: true
+        sourceVideoId:
+          type: integer
+          nullable: true
+        challengeType:
+          type: string
+          enum: [solo_remake, team_battle, remix_battle, speed_battle, budget_battle, ingredient_restriction, culture_variation]
+        scopeType:
+          type: string
+          enum: [private, circle, local, public, global]
+        groupId:
+          type: integer
+          nullable: true
+        createdBy:
+          type: integer
+        maxTeamSize:
+          type: integer
+          nullable: true
+        coverImageUrl:
+          type: string
+          nullable: true
+        registrationEnd:
+          type: string
+          format: date-time
+          nullable: true
+        submissionDeadline:
+          type: string
+          format: date-time
+          nullable: true
+        ingredientList:
+          type: array
+          items:
+            type: string
+        optionalSubstitutions:
+          type: array
+          items:
+            type: string
+        toolList:
+          type: array
+          items:
+            type: string
+        estimatedCostMin:
+          type: integer
+          nullable: true
+        estimatedCostMax:
+          type: integer
+          nullable: true
+        estimatedTimeMinutes:
+          type: integer
+          nullable: true
+        difficultyLevel:
+          type: integer
+          nullable: true
+        dietaryNotes:
+          type: array
+          items:
+            type: string
+      required:
+        - title
+        - sourceType
+        - challengeType
+        - scopeType
+        - createdBy
+
+    SubmitEntryBody:
+      type: object
+      properties:
+        userId:
+          type: integer
+        teamId:
+          type: integer
+          nullable: true
+        photoUrl:
+          type: string
+          nullable: true
+        videoUrl:
+          type: string
+          nullable: true
+        caption:
+          type: string
+          nullable: true
+        journalNote:
+          type: string
+          nullable: true
+        substitutionsUsed:
+          type: array
+          items:
+            type: string
+      required:
+        - userId
+
+    JoinBattleBody:
+      type: object
+      properties:
+        userId:
+          type: integer
+        teamName:
+          type: string
+          nullable: true
+      required:
+        - userId
+
+    TrackInterestBody:
+      type: object
+      properties:
+        userId:
+          type: integer
+        intentType:
+          type: string
+          enum: [viewed, saved, wants_to_join, opened_prep, shared]
+      required:
+        - userId
+        - intentType
+
+    ScoreCandidateBody:
+      type: object
+      properties:
+        sourceType:
+          type: string
+          enum: [meal, video]
+        sourceId:
+          type: integer
+      required:
+        - sourceType
+        - sourceId
+
+    CandidateScore:
+      type: object
+      properties:
+        score:
+          type: number
+        breakdown:
+          type: object
+          properties:
+            ingredientSimplicity:
+              type: number
+            visualPayoff:
+              type: number
+            timeAccessibility:
+              type: number
+            toolSimplicity:
+              type: number
+            noveltyFactor:
+              type: number
+            socialReplayValue:
+              type: number
+          required:
+            - ingredientSimplicity
+            - visualPayoff
+            - timeAccessibility
+            - toolSimplicity
+            - noveltyFactor
+            - socialReplayValue
+        recommended:
+          type: boolean
+        battleClass:
+          type: string
+          enum: [instant_battle, circle_challenge, skill_battle, seasonal_showdown, mealkit_remix]
+      required:
+        - score
+        - breakdown
+        - recommended
+        - battleClass
+
+    CreateFromContentBody:
+      type: object
+      properties:
+        sourceType:
+          type: string
+          enum: [meal, video]
+        sourceId:
+          type: integer
+        createdBy:
+          type: integer
+        scopeType:
+          type: string
+          enum: [private, circle, local, public, global]
+        groupId:
+          type: integer
+          nullable: true
+      required:
+        - sourceType
+        - sourceId
+        - createdBy
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        user:
+          $ref: "#/components/schemas/User"
+        totalScore:
+          type: number
+        battlesEntered:
+          type: integer
+        battlesWon:
+          type: integer
+        totalEntries:
+          type: integer
+      required:
+        - rank
+        - user
+        - totalScore
+        - battlesEntered
+        - battlesWon
+        - totalEntries

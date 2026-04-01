@@ -13,6 +13,9 @@ import SavedItems from "@/pages/saved";
 import Profile from "@/pages/profile";
 import Create from "@/pages/create";
 import EditProfile from "@/pages/edit-profile";
+import Battles from "@/pages/battles";
+import BattleDetail from "@/pages/battle-detail";
+import CreateBattle from "@/pages/create-battle";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +31,9 @@ function Router() {
       <Route path="/profile/:userId" component={Profile} />
       <Route path="/profile/:userId/edit" component={EditProfile} />
       <Route path="/create" component={Create} />
+      <Route path="/battles/create" component={CreateBattle} />
+      <Route path="/battles/:battleId" component={BattleDetail} />
+      <Route path="/battles" component={Battles} />
       <Route component={NotFound} />
     </Switch>
   );

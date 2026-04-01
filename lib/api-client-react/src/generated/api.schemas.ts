@@ -416,6 +416,297 @@ export interface CreateCommentBody {
   body: string;
 }
 
+export type BattleSourceType =
+  (typeof BattleSourceType)[keyof typeof BattleSourceType];
+
+export const BattleSourceType = {
+  meal: "meal",
+  video: "video",
+  external: "external",
+} as const;
+
+export type BattleChallengeType =
+  (typeof BattleChallengeType)[keyof typeof BattleChallengeType];
+
+export const BattleChallengeType = {
+  solo_remake: "solo_remake",
+  team_battle: "team_battle",
+  remix_battle: "remix_battle",
+  speed_battle: "speed_battle",
+  budget_battle: "budget_battle",
+  ingredient_restriction: "ingredient_restriction",
+  culture_variation: "culture_variation",
+} as const;
+
+export type BattleScopeType =
+  (typeof BattleScopeType)[keyof typeof BattleScopeType];
+
+export const BattleScopeType = {
+  private: "private",
+  circle: "circle",
+  local: "local",
+  public: "public",
+  global: "global",
+} as const;
+
+export type BattleBattleStatus =
+  (typeof BattleBattleStatus)[keyof typeof BattleBattleStatus];
+
+export const BattleBattleStatus = {
+  draft: "draft",
+  open: "open",
+  live: "live",
+  judging: "judging",
+  completed: "completed",
+  archived: "archived",
+} as const;
+
+export interface Battle {
+  id: number;
+  title: string;
+  slug: string;
+  description?: string | null;
+  sourceType: BattleSourceType;
+  sourceMealId?: number | null;
+  sourceVideoId?: number | null;
+  challengeType: BattleChallengeType;
+  scopeType: BattleScopeType;
+  battleStatus: BattleBattleStatus;
+  groupId?: number | null;
+  createdBy: number;
+  battleWorthinessScore: number;
+  maxTeamSize: number;
+  registrationStart?: string | null;
+  registrationEnd?: string | null;
+  prepStart?: string | null;
+  submissionDeadline?: string | null;
+  judgingEnd?: string | null;
+  participantCount: number;
+  entryCount: number;
+  coverImageUrl?: string | null;
+  createdAt: string;
+}
+
+export interface BattleRequirements {
+  id: number;
+  battleId: number;
+  ingredientList: string[];
+  optionalSubstitutions: string[];
+  toolList: string[];
+  estimatedCostMin?: number | null;
+  estimatedCostMax?: number | null;
+  estimatedTimeMinutes?: number | null;
+  difficultyLevel: number;
+  dietaryNotes: string[];
+  regionNotes?: string | null;
+}
+
+export type BattleEntryStatus =
+  (typeof BattleEntryStatus)[keyof typeof BattleEntryStatus];
+
+export const BattleEntryStatus = {
+  draft: "draft",
+  submitted: "submitted",
+  approved: "approved",
+  disqualified: "disqualified",
+} as const;
+
+export interface BattleEntry {
+  id: number;
+  battleId: number;
+  userId: number;
+  teamId?: number | null;
+  photoUrl?: string | null;
+  videoUrl?: string | null;
+  caption?: string | null;
+  journalNote?: string | null;
+  substitutionsUsed: string[];
+  status: BattleEntryStatus;
+  completionScore: number;
+  creativityScore: number;
+  presentationScore: number;
+  peerVotes: number;
+  totalScore: number;
+  rank?: number | null;
+  submittedAt: string;
+}
+
+export type BattleEntryWithUser = BattleEntry & {
+  user: User;
+};
+
+export type BattleWithDetails = Battle & {
+  creator: User;
+  requirements?: BattleRequirements | null;
+  sourceMeal?: MealWithAuthor | null;
+  sourceVideo?: VideoWithAuthor | null;
+  topEntries?: BattleEntryWithUser[];
+};
+
+export type CreateBattleBodySourceType =
+  (typeof CreateBattleBodySourceType)[keyof typeof CreateBattleBodySourceType];
+
+export const CreateBattleBodySourceType = {
+  meal: "meal",
+  video: "video",
+  external: "external",
+} as const;
+
+export type CreateBattleBodyChallengeType =
+  (typeof CreateBattleBodyChallengeType)[keyof typeof CreateBattleBodyChallengeType];
+
+export const CreateBattleBodyChallengeType = {
+  solo_remake: "solo_remake",
+  team_battle: "team_battle",
+  remix_battle: "remix_battle",
+  speed_battle: "speed_battle",
+  budget_battle: "budget_battle",
+  ingredient_restriction: "ingredient_restriction",
+  culture_variation: "culture_variation",
+} as const;
+
+export type CreateBattleBodyScopeType =
+  (typeof CreateBattleBodyScopeType)[keyof typeof CreateBattleBodyScopeType];
+
+export const CreateBattleBodyScopeType = {
+  private: "private",
+  circle: "circle",
+  local: "local",
+  public: "public",
+  global: "global",
+} as const;
+
+export interface CreateBattleBody {
+  title: string;
+  description?: string | null;
+  sourceType: CreateBattleBodySourceType;
+  sourceMealId?: number | null;
+  sourceVideoId?: number | null;
+  challengeType: CreateBattleBodyChallengeType;
+  scopeType: CreateBattleBodyScopeType;
+  groupId?: number | null;
+  createdBy: number;
+  maxTeamSize?: number | null;
+  coverImageUrl?: string | null;
+  registrationEnd?: string | null;
+  submissionDeadline?: string | null;
+  ingredientList?: string[];
+  optionalSubstitutions?: string[];
+  toolList?: string[];
+  estimatedCostMin?: number | null;
+  estimatedCostMax?: number | null;
+  estimatedTimeMinutes?: number | null;
+  difficultyLevel?: number | null;
+  dietaryNotes?: string[];
+}
+
+export interface SubmitEntryBody {
+  userId: number;
+  teamId?: number | null;
+  photoUrl?: string | null;
+  videoUrl?: string | null;
+  caption?: string | null;
+  journalNote?: string | null;
+  substitutionsUsed?: string[];
+}
+
+export interface JoinBattleBody {
+  userId: number;
+  teamName?: string | null;
+}
+
+export type TrackInterestBodyIntentType =
+  (typeof TrackInterestBodyIntentType)[keyof typeof TrackInterestBodyIntentType];
+
+export const TrackInterestBodyIntentType = {
+  viewed: "viewed",
+  saved: "saved",
+  wants_to_join: "wants_to_join",
+  opened_prep: "opened_prep",
+  shared: "shared",
+} as const;
+
+export interface TrackInterestBody {
+  userId: number;
+  intentType: TrackInterestBodyIntentType;
+}
+
+export type ScoreCandidateBodySourceType =
+  (typeof ScoreCandidateBodySourceType)[keyof typeof ScoreCandidateBodySourceType];
+
+export const ScoreCandidateBodySourceType = {
+  meal: "meal",
+  video: "video",
+} as const;
+
+export interface ScoreCandidateBody {
+  sourceType: ScoreCandidateBodySourceType;
+  sourceId: number;
+}
+
+export type CandidateScoreBreakdown = {
+  ingredientSimplicity: number;
+  visualPayoff: number;
+  timeAccessibility: number;
+  toolSimplicity: number;
+  noveltyFactor: number;
+  socialReplayValue: number;
+};
+
+export type CandidateScoreBattleClass =
+  (typeof CandidateScoreBattleClass)[keyof typeof CandidateScoreBattleClass];
+
+export const CandidateScoreBattleClass = {
+  instant_battle: "instant_battle",
+  circle_challenge: "circle_challenge",
+  skill_battle: "skill_battle",
+  seasonal_showdown: "seasonal_showdown",
+  mealkit_remix: "mealkit_remix",
+} as const;
+
+export interface CandidateScore {
+  score: number;
+  breakdown: CandidateScoreBreakdown;
+  recommended: boolean;
+  battleClass: CandidateScoreBattleClass;
+}
+
+export type CreateFromContentBodySourceType =
+  (typeof CreateFromContentBodySourceType)[keyof typeof CreateFromContentBodySourceType];
+
+export const CreateFromContentBodySourceType = {
+  meal: "meal",
+  video: "video",
+} as const;
+
+export type CreateFromContentBodyScopeType =
+  (typeof CreateFromContentBodyScopeType)[keyof typeof CreateFromContentBodyScopeType];
+
+export const CreateFromContentBodyScopeType = {
+  private: "private",
+  circle: "circle",
+  local: "local",
+  public: "public",
+  global: "global",
+} as const;
+
+export interface CreateFromContentBody {
+  sourceType: CreateFromContentBodySourceType;
+  sourceId: number;
+  createdBy: number;
+  scopeType?: CreateFromContentBodyScopeType;
+  groupId?: number | null;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  user: User;
+  totalScore: number;
+  battlesEntered: number;
+  battlesWon: number;
+  totalEntries: number;
+}
+
 export type ListMealsParams = {
   groupId?: number;
   authorId?: number;
@@ -445,4 +736,49 @@ export type GetFeedParams = {
 
 export type GetFeedSummaryParams = {
   userId?: number;
+};
+
+export type ListBattlesParams = {
+  scopeType?: ListBattlesScopeType;
+  battleStatus?: ListBattlesBattleStatus;
+  challengeType?: string;
+  groupId?: number;
+  limit?: number;
+  offset?: number;
+};
+
+export type ListBattlesScopeType =
+  (typeof ListBattlesScopeType)[keyof typeof ListBattlesScopeType];
+
+export const ListBattlesScopeType = {
+  private: "private",
+  circle: "circle",
+  local: "local",
+  public: "public",
+  global: "global",
+} as const;
+
+export type ListBattlesBattleStatus =
+  (typeof ListBattlesBattleStatus)[keyof typeof ListBattlesBattleStatus];
+
+export const ListBattlesBattleStatus = {
+  draft: "draft",
+  open: "open",
+  live: "live",
+  judging: "judging",
+  completed: "completed",
+  archived: "archived",
+} as const;
+
+export type TrackBattleInterest201 = {
+  ok: boolean;
+};
+
+export type JoinBattle200 = {
+  ok: boolean;
+  participantCount: number;
+};
+
+export type GetBattleLeaderboardParams = {
+  limit?: number;
 };

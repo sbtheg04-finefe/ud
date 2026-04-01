@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, Video, Bookmark, PlusCircle, ChefHat } from "lucide-react";
+import { Home, Users, Video, Bookmark, PlusCircle, ChefHat, Swords } from "lucide-react";
 
 export function Navbar() {
   const [location] = useLocation();
@@ -19,6 +19,7 @@ export function Navbar() {
     { href: "/", label: "Feed", icon: Home },
     { href: "/groups", label: "Groups", icon: Users },
     { href: "/videos", label: "Hacks", icon: Video },
+    { href: "/battles", label: "Battles", icon: Swords },
     { href: "/saved", label: "Saved", icon: Bookmark },
   ];
 

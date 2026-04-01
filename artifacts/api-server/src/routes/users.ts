@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { usersTable, groupMembershipsTable, mealsTable, videosTable, savesTable, reactionsTable } from "@workspace/db/schema";
-import { eq, count } from "drizzle-orm";
+import { usersTable, groupMembershipsTable, mealsTable, videosTable, savesTable, reactionsTable, battlesTable, battleEntriesTable, battleRequirementsTable } from "@workspace/db/schema";
+import { eq, count, desc, or } from "drizzle-orm";
 import { CreateUserBody, UpdateUserBody } from "@workspace/api-zod";
 
 const router = Router();
@@ -118,6 +118,39 @@ router.get("/:userId/groups", async (req, res) => {
   );
 
   res.json(groups);
+});
+
+router.get("/:userId/battles", async (req, res) => {
+  const userId = parseInt(req.params.userId);
+
+  const entries = await db
+    .select({ battleId: battleEntriesTable.battleId })
+    .from(battleEntriesTable)
+    .where(eq(battleEntriesTable.userId, userId));
+
+  const battleIds = entries.map((e) => e.battleId);
+
+  const battles = await db
+    .select()
+    .from(battlesTable)
+    .where(
+      or(
+        eq(battlesTable.createdBy, userId),
+        battleIds.length > 0 ? eq(battlesTable.id, battleIds[0]) : undefined
+      )
+    )
+    .orderBy(desc(battlesTable.createdAt))
+    .limit(20);
+
+  const enriched = await Promise.all(
+    battles.map(async (battle) => {
+      const [creator] = await db.select().from(usersTable).where(eq(usersTable.id, battle.createdBy));
+      const [requirements] = await db.select().from(battleRequirementsTable).where(eq(battleRequirementsTable.battleId, battle.id));
+      return { ...battle, creator, requirements: requirements || null, sourceMeal: null, sourceVideo: null, topEntries: [] };
+    })
+  );
+
+  res.json(enriched);
 });
 
 export default router;

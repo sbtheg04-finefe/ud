@@ -6,6 +6,7 @@ import mealsRouter from "./meals";
 import videosRouter from "./videos";
 import feedRouter from "./feed";
 import engagementRouter from "./engagement";
+import battlesRouter from "./battles";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use("/meals", mealsRouter);
 router.use("/videos", videosRouter);
 router.use("/feed", feedRouter);
 router.use(engagementRouter);
+router.use("/battles", battlesRouter);
 
 export default router;
