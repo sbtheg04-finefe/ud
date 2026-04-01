@@ -768,6 +768,165 @@ export interface LeaderboardEntry {
   totalEntries: number;
 }
 
+export type AuthUserRolesItem =
+  (typeof AuthUserRolesItem)[keyof typeof AuthUserRolesItem];
+
+export const AuthUserRolesItem = {
+  user: "user",
+  partner: "partner",
+  judge: "judge",
+} as const;
+
+export interface AuthUser {
+  id: number;
+  replitId: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  profileImageUrl?: string | null;
+  displayName?: string | null;
+  username?: string | null;
+  roles: AuthUserRolesItem[];
+  onboardingCompleted: boolean;
+  referralCode?: string | null;
+}
+
+export interface AuthUserEnvelope {
+  user: AuthUser | null;
+}
+
+export interface GetCurrentAuthUserResponse {
+  user: AuthUser | null;
+}
+
+export interface OnboardingStatus {
+  onboardingCompleted: boolean;
+  roles: string[];
+  userId: number;
+}
+
+export interface PartnerProfileInput {
+  brandName?: string;
+  brandCategory?: string;
+  billingEmail?: string;
+  website?: string | null;
+  logoUrl?: string | null;
+}
+
+export interface JudgeProfileInput {
+  credentials?: string | null;
+  specialties?: string[];
+  bio?: string | null;
+  yearsExperience?: number;
+}
+
+export type CompleteOnboardingBodyRolesItem =
+  (typeof CompleteOnboardingBodyRolesItem)[keyof typeof CompleteOnboardingBodyRolesItem];
+
+export const CompleteOnboardingBodyRolesItem = {
+  user: "user",
+  partner: "partner",
+  judge: "judge",
+} as const;
+
+export interface CompleteOnboardingBody {
+  roles: CompleteOnboardingBodyRolesItem[];
+  displayName?: string;
+  username?: string;
+  bio?: string | null;
+  referralCode?: string | null;
+  partnerProfile?: PartnerProfileInput | null;
+  judgeProfile?: JudgeProfileInput | null;
+}
+
+export interface PartnerProfile {
+  id: number;
+  userId: number;
+  brandName: string;
+  brandCategory: string;
+  website?: string | null;
+  logoUrl?: string | null;
+  billingEmail: string;
+  monthlyBudget: number;
+  activeSponsorships: number;
+  totalSponsored: number;
+  isVerified: boolean;
+  createdAt: string;
+}
+
+export interface CreatePartnerProfileBody {
+  brandName: string;
+  brandCategory: string;
+  billingEmail: string;
+  website?: string | null;
+  logoUrl?: string | null;
+}
+
+export interface SponsorBattleBody {
+  battleId: number;
+  sponsorshipAmount?: number;
+  prizeDescription?: string | null;
+  logoUrl?: string | null;
+}
+
+export interface BattleSponsorship {
+  id: number;
+  battleId: number;
+  partnerUserId: number;
+  sponsorshipAmount: number;
+  prizeDescription?: string | null;
+  logoUrl?: string | null;
+  visibilityBoost: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface JudgeProfile {
+  id: number;
+  userId: number;
+  credentials?: string | null;
+  specialties: string[];
+  bio?: string | null;
+  yearsExperience: number;
+  totalJudged: number;
+  averageRating?: number | null;
+  isVerified: boolean;
+  isAvailable: boolean;
+  createdAt: string;
+}
+
+export interface CreateJudgeProfileBody {
+  credentials?: string | null;
+  specialties?: string[];
+  bio?: string | null;
+  yearsExperience?: number;
+}
+
+export interface JudgeAssignmentWithBattle {
+  id: number;
+  judgeUserId: number;
+  battleId: number;
+  assignedAt: string;
+  completedAt?: string | null;
+  isAccepted: boolean;
+  compensationAmount: number;
+  battle: BattleWithDetails;
+}
+
+/**
+ * Bearer session token (for mobile clients)
+ */
+export type AuthorizationSessionHeaderParameter = string;
+
+export type BeginBrowserLoginParams = {
+  returnTo?: string;
+};
+
+export type HandleBrowserLoginCallbackParams = {
+  code?: string;
+  state?: string;
+};
+
 export type ListMealsParams = {
   groupId?: number;
   authorId?: number;

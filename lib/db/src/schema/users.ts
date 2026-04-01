@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, pgEnum, varchar, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -15,6 +15,13 @@ export const usersTable = pgTable("users", {
   dietaryPreferences: text("dietary_preferences").array().notNull().default([]),
   cookingInterests: text("cooking_interests").array().notNull().default([]),
   role: userRoleEnum("role").notNull().default("user"),
+
+  replitUserId: varchar("replit_user_id").unique(),
+  roles: text("roles").array().notNull().default(["user"]),
+  referralCode: varchar("referral_code", { length: 16 }).unique(),
+  referredById: integer("referred_by_id"),
+  onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
+
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

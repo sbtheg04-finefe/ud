@@ -8,6 +8,1100 @@
 import * as zod from "zod";
 
 /**
+ * @summary Get the currently authenticated user
+ */
+export const GetCurrentAuthUserHeader = zod.object({
+  Authorization: zod
+    .string()
+    .optional()
+    .describe("Bearer session token (for mobile clients)"),
+});
+
+export const GetCurrentAuthUserResponse = zod.object({
+  user: zod.union([
+    zod.object({
+      id: zod.number(),
+      replitId: zod.string(),
+      email: zod.string().nullish(),
+      firstName: zod.string().nullish(),
+      lastName: zod.string().nullish(),
+      profileImageUrl: zod.string().nullish(),
+      displayName: zod.string().nullish(),
+      username: zod.string().nullish(),
+      roles: zod.array(zod.enum(["user", "partner", "judge"])),
+      onboardingCompleted: zod.boolean(),
+      referralCode: zod.string().nullish(),
+    }),
+    zod.null(),
+  ]),
+});
+
+/**
+ * @summary Start the browser OIDC login flow
+ */
+export const BeginBrowserLoginQueryParams = zod.object({
+  returnTo: zod.coerce.string().optional(),
+});
+
+/**
+ * @summary Complete the browser OIDC login flow
+ */
+export const HandleBrowserLoginCallbackQueryParams = zod.object({
+  code: zod.coerce.string().optional(),
+  state: zod.coerce.string().optional(),
+});
+
+/**
+ * @summary Clear the session and begin OIDC logout
+ */
+export const LogoutBrowserSessionHeader = zod.object({
+  Authorization: zod
+    .string()
+    .optional()
+    .describe("Bearer session token (for mobile clients)"),
+});
+
+/**
+ * @summary Get current user's onboarding status
+ */
+export const GetOnboardingStatusResponse = zod.object({
+  onboardingCompleted: zod.boolean(),
+  roles: zod.array(zod.string()),
+  userId: zod.number(),
+});
+
+/**
+ * @summary Complete onboarding and set user roles + profile
+ */
+export const CompleteOnboardingBody = zod.object({
+  roles: zod.array(zod.enum(["user", "partner", "judge"])),
+  displayName: zod.string().optional(),
+  username: zod.string().optional(),
+  bio: zod.string().nullish(),
+  referralCode: zod.string().nullish(),
+  partnerProfile: zod
+    .object({
+      brandName: zod.string().optional(),
+      brandCategory: zod.string().optional(),
+      billingEmail: zod.string().optional(),
+      website: zod.string().nullish(),
+      logoUrl: zod.string().nullish(),
+    })
+    .nullish(),
+  judgeProfile: zod
+    .object({
+      credentials: zod.string().nullish(),
+      specialties: zod.array(zod.string()).optional(),
+      bio: zod.string().nullish(),
+      yearsExperience: zod.number().optional(),
+    })
+    .nullish(),
+});
+
+export const CompleteOnboardingResponse = zod.object({
+  user: zod.union([
+    zod.object({
+      id: zod.number(),
+      replitId: zod.string(),
+      email: zod.string().nullish(),
+      firstName: zod.string().nullish(),
+      lastName: zod.string().nullish(),
+      profileImageUrl: zod.string().nullish(),
+      displayName: zod.string().nullish(),
+      username: zod.string().nullish(),
+      roles: zod.array(zod.enum(["user", "partner", "judge"])),
+      onboardingCompleted: zod.boolean(),
+      referralCode: zod.string().nullish(),
+    }),
+    zod.null(),
+  ]),
+});
+
+/**
+ * @summary Get the current user's partner profile
+ */
+export const GetPartnerProfileResponse = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  brandName: zod.string(),
+  brandCategory: zod.string(),
+  website: zod.string().nullish(),
+  logoUrl: zod.string().nullish(),
+  billingEmail: zod.string(),
+  monthlyBudget: zod.number(),
+  activeSponsorships: zod.number(),
+  totalSponsored: zod.number(),
+  isVerified: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Create or update partner profile
+ */
+export const CreatePartnerProfileBody = zod.object({
+  brandName: zod.string(),
+  brandCategory: zod.string(),
+  billingEmail: zod.string(),
+  website: zod.string().nullish(),
+  logoUrl: zod.string().nullish(),
+});
+
+export const CreatePartnerProfileResponse = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  brandName: zod.string(),
+  brandCategory: zod.string(),
+  website: zod.string().nullish(),
+  logoUrl: zod.string().nullish(),
+  billingEmail: zod.string(),
+  monthlyBudget: zod.number(),
+  activeSponsorships: zod.number(),
+  totalSponsored: zod.number(),
+  isVerified: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Get battles sponsored by this partner
+ */
+export const GetPartnerBattlesResponseItem = zod
+  .object({
+    id: zod.number(),
+    title: zod.string(),
+    slug: zod.string(),
+    description: zod.string().nullish(),
+    sourceType: zod.enum(["meal", "video", "external"]),
+    sourceMealId: zod.number().nullish(),
+    sourceVideoId: zod.number().nullish(),
+    challengeType: zod.enum([
+      "solo_remake",
+      "team_battle",
+      "remix_battle",
+      "speed_battle",
+      "budget_battle",
+      "ingredient_restriction",
+      "culture_variation",
+    ]),
+    scopeType: zod.enum(["private", "circle", "local", "public", "global"]),
+    battleStatus: zod.enum([
+      "draft",
+      "open",
+      "live",
+      "judging",
+      "completed",
+      "archived",
+    ]),
+    groupId: zod.number().nullish(),
+    createdBy: zod.number(),
+    battleWorthinessScore: zod.number(),
+    maxTeamSize: zod.number(),
+    registrationStart: zod.coerce.date().nullish(),
+    registrationEnd: zod.coerce.date().nullish(),
+    prepStart: zod.coerce.date().nullish(),
+    submissionDeadline: zod.coerce.date().nullish(),
+    judgingEnd: zod.coerce.date().nullish(),
+    participantCount: zod.number(),
+    entryCount: zod.number(),
+    coverImageUrl: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      creator: zod.object({
+        id: zod.number(),
+        displayName: zod.string(),
+        username: zod.string(),
+        email: zod.string(),
+        avatarUrl: zod.string().nullish(),
+        bio: zod.string().nullish(),
+        locationText: zod.string().nullish(),
+        dietaryPreferences: zod.array(zod.string()),
+        cookingInterests: zod.array(zod.string()),
+        role: zod.enum(["user", "moderator", "admin"]),
+        createdAt: zod.coerce.date(),
+      }),
+      requirements: zod
+        .object({
+          id: zod.number(),
+          battleId: zod.number(),
+          ingredientList: zod.array(zod.string()),
+          optionalSubstitutions: zod.array(zod.string()),
+          toolList: zod.array(zod.string()),
+          estimatedCostMin: zod.number().nullish(),
+          estimatedCostMax: zod.number().nullish(),
+          estimatedTimeMinutes: zod.number().nullish(),
+          difficultyLevel: zod.number(),
+          dietaryNotes: zod.array(zod.string()),
+          regionNotes: zod.string().nullish(),
+        })
+        .nullish(),
+      sourceMeal: zod
+        .object({
+          id: zod.number(),
+          authorId: zod.number(),
+          groupId: zod.number().nullish(),
+          title: zod.string(),
+          description: zod.string().nullish(),
+          mealType: zod.enum([
+            "breakfast",
+            "lunch",
+            "dinner",
+            "snack",
+            "dessert",
+            "brunch",
+            "other",
+          ]),
+          cuisineTags: zod.array(zod.string()),
+          dietaryTags: zod.array(zod.string()),
+          imageUrl: zod.string().nullish(),
+          servings: zod.number().nullish(),
+          shareStatus: zod.enum(["idea", "cooking", "available", "finished"]),
+          locationText: zod.string().nullish(),
+          ingredientsSummary: zod.string().nullish(),
+          instructionsSummary: zod.string().nullish(),
+          likeCount: zod.number(),
+          saveCount: zod.number(),
+          commentCount: zod.number(),
+          createdAt: zod.coerce.date(),
+        })
+        .and(
+          zod.object({
+            author: zod.object({
+              id: zod.number(),
+              displayName: zod.string(),
+              username: zod.string(),
+              email: zod.string(),
+              avatarUrl: zod.string().nullish(),
+              bio: zod.string().nullish(),
+              locationText: zod.string().nullish(),
+              dietaryPreferences: zod.array(zod.string()),
+              cookingInterests: zod.array(zod.string()),
+              role: zod.enum(["user", "moderator", "admin"]),
+              createdAt: zod.coerce.date(),
+            }),
+            group: zod
+              .object({
+                id: zod.number(),
+                name: zod.string(),
+                slug: zod.string(),
+                description: zod.string().nullish(),
+                coverImageUrl: zod.string().nullish(),
+                visibility: zod.enum(["public", "private", "invite_only"]),
+                createdById: zod.number(),
+                memberCount: zod.number(),
+                tags: zod.array(zod.string()),
+                createdAt: zod.coerce.date(),
+              })
+              .nullish(),
+          }),
+        )
+        .nullish(),
+      sourceVideo: zod
+        .object({
+          id: zod.number(),
+          authorId: zod.number(),
+          linkedMealId: zod.number().nullish(),
+          groupId: zod.number().nullish(),
+          title: zod.string(),
+          caption: zod.string().nullish(),
+          videoUrl: zod.string().nullish(),
+          thumbnailUrl: zod.string().nullish(),
+          durationSeconds: zod.number().nullish(),
+          tags: zod.array(zod.string()),
+          likeCount: zod.number(),
+          saveCount: zod.number(),
+          commentCount: zod.number(),
+          hackStatus: zod.enum([
+            "submitted",
+            "community_voting",
+            "ai_reviewing",
+            "approved",
+            "challenged",
+            "rejected",
+          ]),
+          communityUpvotes: zod.number(),
+          communityDownvotes: zod.number(),
+          aiScore: zod.number().nullish(),
+          aiAnalysis: zod.string().nullish(),
+          aiReviewedAt: zod.coerce.date().nullish(),
+          approvedAt: zod.coerce.date().nullish(),
+          creativeEngagementScore: zod.number(),
+          createdAt: zod.coerce.date(),
+        })
+        .and(
+          zod.object({
+            author: zod.object({
+              id: zod.number(),
+              displayName: zod.string(),
+              username: zod.string(),
+              email: zod.string(),
+              avatarUrl: zod.string().nullish(),
+              bio: zod.string().nullish(),
+              locationText: zod.string().nullish(),
+              dietaryPreferences: zod.array(zod.string()),
+              cookingInterests: zod.array(zod.string()),
+              role: zod.enum(["user", "moderator", "admin"]),
+              createdAt: zod.coerce.date(),
+            }),
+            group: zod
+              .object({
+                id: zod.number(),
+                name: zod.string(),
+                slug: zod.string(),
+                description: zod.string().nullish(),
+                coverImageUrl: zod.string().nullish(),
+                visibility: zod.enum(["public", "private", "invite_only"]),
+                createdById: zod.number(),
+                memberCount: zod.number(),
+                tags: zod.array(zod.string()),
+                createdAt: zod.coerce.date(),
+              })
+              .nullish(),
+            linkedMeal: zod
+              .object({
+                id: zod.number(),
+                authorId: zod.number(),
+                groupId: zod.number().nullish(),
+                title: zod.string(),
+                description: zod.string().nullish(),
+                mealType: zod.enum([
+                  "breakfast",
+                  "lunch",
+                  "dinner",
+                  "snack",
+                  "dessert",
+                  "brunch",
+                  "other",
+                ]),
+                cuisineTags: zod.array(zod.string()),
+                dietaryTags: zod.array(zod.string()),
+                imageUrl: zod.string().nullish(),
+                servings: zod.number().nullish(),
+                shareStatus: zod.enum([
+                  "idea",
+                  "cooking",
+                  "available",
+                  "finished",
+                ]),
+                locationText: zod.string().nullish(),
+                ingredientsSummary: zod.string().nullish(),
+                instructionsSummary: zod.string().nullish(),
+                likeCount: zod.number(),
+                saveCount: zod.number(),
+                commentCount: zod.number(),
+                createdAt: zod.coerce.date(),
+              })
+              .nullish(),
+          }),
+        )
+        .nullish(),
+      topEntries: zod
+        .array(
+          zod
+            .object({
+              id: zod.number(),
+              battleId: zod.number(),
+              userId: zod.number(),
+              teamId: zod.number().nullish(),
+              photoUrl: zod.string().nullish(),
+              videoUrl: zod.string().nullish(),
+              caption: zod.string().nullish(),
+              journalNote: zod.string().nullish(),
+              substitutionsUsed: zod.array(zod.string()),
+              status: zod.enum([
+                "draft",
+                "submitted",
+                "approved",
+                "disqualified",
+              ]),
+              completionScore: zod.number(),
+              creativityScore: zod.number(),
+              presentationScore: zod.number(),
+              peerVotes: zod.number(),
+              totalScore: zod.number(),
+              rank: zod.number().nullish(),
+              submittedAt: zod.coerce.date(),
+            })
+            .and(
+              zod.object({
+                user: zod.object({
+                  id: zod.number(),
+                  displayName: zod.string(),
+                  username: zod.string(),
+                  email: zod.string(),
+                  avatarUrl: zod.string().nullish(),
+                  bio: zod.string().nullish(),
+                  locationText: zod.string().nullish(),
+                  dietaryPreferences: zod.array(zod.string()),
+                  cookingInterests: zod.array(zod.string()),
+                  role: zod.enum(["user", "moderator", "admin"]),
+                  createdAt: zod.coerce.date(),
+                }),
+              }),
+            ),
+        )
+        .optional(),
+    }),
+  );
+export const GetPartnerBattlesResponse = zod.array(
+  GetPartnerBattlesResponseItem,
+);
+
+/**
+ * @summary Sponsor a battle
+ */
+export const SponsorBattleBody = zod.object({
+  battleId: zod.number(),
+  sponsorshipAmount: zod.number().optional(),
+  prizeDescription: zod.string().nullish(),
+  logoUrl: zod.string().nullish(),
+});
+
+export const SponsorBattleResponse = zod.object({
+  id: zod.number(),
+  battleId: zod.number(),
+  partnerUserId: zod.number(),
+  sponsorshipAmount: zod.number(),
+  prizeDescription: zod.string().nullish(),
+  logoUrl: zod.string().nullish(),
+  visibilityBoost: zod.number(),
+  isActive: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Get the current user's judge profile
+ */
+export const GetJudgeProfileResponse = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  credentials: zod.string().nullish(),
+  specialties: zod.array(zod.string()),
+  bio: zod.string().nullish(),
+  yearsExperience: zod.number(),
+  totalJudged: zod.number(),
+  averageRating: zod.number().nullish(),
+  isVerified: zod.boolean(),
+  isAvailable: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Create or update judge profile
+ */
+export const CreateJudgeProfileBody = zod.object({
+  credentials: zod.string().nullish(),
+  specialties: zod.array(zod.string()).optional(),
+  bio: zod.string().nullish(),
+  yearsExperience: zod.number().optional(),
+});
+
+export const CreateJudgeProfileResponse = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  credentials: zod.string().nullish(),
+  specialties: zod.array(zod.string()),
+  bio: zod.string().nullish(),
+  yearsExperience: zod.number(),
+  totalJudged: zod.number(),
+  averageRating: zod.number().nullish(),
+  isVerified: zod.boolean(),
+  isAvailable: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Get battles assigned to this judge
+ */
+export const GetJudgeAssignmentsResponseItem = zod.object({
+  id: zod.number(),
+  judgeUserId: zod.number(),
+  battleId: zod.number(),
+  assignedAt: zod.coerce.date(),
+  completedAt: zod.coerce.date().nullish(),
+  isAccepted: zod.boolean(),
+  compensationAmount: zod.number(),
+  battle: zod
+    .object({
+      id: zod.number(),
+      title: zod.string(),
+      slug: zod.string(),
+      description: zod.string().nullish(),
+      sourceType: zod.enum(["meal", "video", "external"]),
+      sourceMealId: zod.number().nullish(),
+      sourceVideoId: zod.number().nullish(),
+      challengeType: zod.enum([
+        "solo_remake",
+        "team_battle",
+        "remix_battle",
+        "speed_battle",
+        "budget_battle",
+        "ingredient_restriction",
+        "culture_variation",
+      ]),
+      scopeType: zod.enum(["private", "circle", "local", "public", "global"]),
+      battleStatus: zod.enum([
+        "draft",
+        "open",
+        "live",
+        "judging",
+        "completed",
+        "archived",
+      ]),
+      groupId: zod.number().nullish(),
+      createdBy: zod.number(),
+      battleWorthinessScore: zod.number(),
+      maxTeamSize: zod.number(),
+      registrationStart: zod.coerce.date().nullish(),
+      registrationEnd: zod.coerce.date().nullish(),
+      prepStart: zod.coerce.date().nullish(),
+      submissionDeadline: zod.coerce.date().nullish(),
+      judgingEnd: zod.coerce.date().nullish(),
+      participantCount: zod.number(),
+      entryCount: zod.number(),
+      coverImageUrl: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+    })
+    .and(
+      zod.object({
+        creator: zod.object({
+          id: zod.number(),
+          displayName: zod.string(),
+          username: zod.string(),
+          email: zod.string(),
+          avatarUrl: zod.string().nullish(),
+          bio: zod.string().nullish(),
+          locationText: zod.string().nullish(),
+          dietaryPreferences: zod.array(zod.string()),
+          cookingInterests: zod.array(zod.string()),
+          role: zod.enum(["user", "moderator", "admin"]),
+          createdAt: zod.coerce.date(),
+        }),
+        requirements: zod
+          .object({
+            id: zod.number(),
+            battleId: zod.number(),
+            ingredientList: zod.array(zod.string()),
+            optionalSubstitutions: zod.array(zod.string()),
+            toolList: zod.array(zod.string()),
+            estimatedCostMin: zod.number().nullish(),
+            estimatedCostMax: zod.number().nullish(),
+            estimatedTimeMinutes: zod.number().nullish(),
+            difficultyLevel: zod.number(),
+            dietaryNotes: zod.array(zod.string()),
+            regionNotes: zod.string().nullish(),
+          })
+          .nullish(),
+        sourceMeal: zod
+          .object({
+            id: zod.number(),
+            authorId: zod.number(),
+            groupId: zod.number().nullish(),
+            title: zod.string(),
+            description: zod.string().nullish(),
+            mealType: zod.enum([
+              "breakfast",
+              "lunch",
+              "dinner",
+              "snack",
+              "dessert",
+              "brunch",
+              "other",
+            ]),
+            cuisineTags: zod.array(zod.string()),
+            dietaryTags: zod.array(zod.string()),
+            imageUrl: zod.string().nullish(),
+            servings: zod.number().nullish(),
+            shareStatus: zod.enum(["idea", "cooking", "available", "finished"]),
+            locationText: zod.string().nullish(),
+            ingredientsSummary: zod.string().nullish(),
+            instructionsSummary: zod.string().nullish(),
+            likeCount: zod.number(),
+            saveCount: zod.number(),
+            commentCount: zod.number(),
+            createdAt: zod.coerce.date(),
+          })
+          .and(
+            zod.object({
+              author: zod.object({
+                id: zod.number(),
+                displayName: zod.string(),
+                username: zod.string(),
+                email: zod.string(),
+                avatarUrl: zod.string().nullish(),
+                bio: zod.string().nullish(),
+                locationText: zod.string().nullish(),
+                dietaryPreferences: zod.array(zod.string()),
+                cookingInterests: zod.array(zod.string()),
+                role: zod.enum(["user", "moderator", "admin"]),
+                createdAt: zod.coerce.date(),
+              }),
+              group: zod
+                .object({
+                  id: zod.number(),
+                  name: zod.string(),
+                  slug: zod.string(),
+                  description: zod.string().nullish(),
+                  coverImageUrl: zod.string().nullish(),
+                  visibility: zod.enum(["public", "private", "invite_only"]),
+                  createdById: zod.number(),
+                  memberCount: zod.number(),
+                  tags: zod.array(zod.string()),
+                  createdAt: zod.coerce.date(),
+                })
+                .nullish(),
+            }),
+          )
+          .nullish(),
+        sourceVideo: zod
+          .object({
+            id: zod.number(),
+            authorId: zod.number(),
+            linkedMealId: zod.number().nullish(),
+            groupId: zod.number().nullish(),
+            title: zod.string(),
+            caption: zod.string().nullish(),
+            videoUrl: zod.string().nullish(),
+            thumbnailUrl: zod.string().nullish(),
+            durationSeconds: zod.number().nullish(),
+            tags: zod.array(zod.string()),
+            likeCount: zod.number(),
+            saveCount: zod.number(),
+            commentCount: zod.number(),
+            hackStatus: zod.enum([
+              "submitted",
+              "community_voting",
+              "ai_reviewing",
+              "approved",
+              "challenged",
+              "rejected",
+            ]),
+            communityUpvotes: zod.number(),
+            communityDownvotes: zod.number(),
+            aiScore: zod.number().nullish(),
+            aiAnalysis: zod.string().nullish(),
+            aiReviewedAt: zod.coerce.date().nullish(),
+            approvedAt: zod.coerce.date().nullish(),
+            creativeEngagementScore: zod.number(),
+            createdAt: zod.coerce.date(),
+          })
+          .and(
+            zod.object({
+              author: zod.object({
+                id: zod.number(),
+                displayName: zod.string(),
+                username: zod.string(),
+                email: zod.string(),
+                avatarUrl: zod.string().nullish(),
+                bio: zod.string().nullish(),
+                locationText: zod.string().nullish(),
+                dietaryPreferences: zod.array(zod.string()),
+                cookingInterests: zod.array(zod.string()),
+                role: zod.enum(["user", "moderator", "admin"]),
+                createdAt: zod.coerce.date(),
+              }),
+              group: zod
+                .object({
+                  id: zod.number(),
+                  name: zod.string(),
+                  slug: zod.string(),
+                  description: zod.string().nullish(),
+                  coverImageUrl: zod.string().nullish(),
+                  visibility: zod.enum(["public", "private", "invite_only"]),
+                  createdById: zod.number(),
+                  memberCount: zod.number(),
+                  tags: zod.array(zod.string()),
+                  createdAt: zod.coerce.date(),
+                })
+                .nullish(),
+              linkedMeal: zod
+                .object({
+                  id: zod.number(),
+                  authorId: zod.number(),
+                  groupId: zod.number().nullish(),
+                  title: zod.string(),
+                  description: zod.string().nullish(),
+                  mealType: zod.enum([
+                    "breakfast",
+                    "lunch",
+                    "dinner",
+                    "snack",
+                    "dessert",
+                    "brunch",
+                    "other",
+                  ]),
+                  cuisineTags: zod.array(zod.string()),
+                  dietaryTags: zod.array(zod.string()),
+                  imageUrl: zod.string().nullish(),
+                  servings: zod.number().nullish(),
+                  shareStatus: zod.enum([
+                    "idea",
+                    "cooking",
+                    "available",
+                    "finished",
+                  ]),
+                  locationText: zod.string().nullish(),
+                  ingredientsSummary: zod.string().nullish(),
+                  instructionsSummary: zod.string().nullish(),
+                  likeCount: zod.number(),
+                  saveCount: zod.number(),
+                  commentCount: zod.number(),
+                  createdAt: zod.coerce.date(),
+                })
+                .nullish(),
+            }),
+          )
+          .nullish(),
+        topEntries: zod
+          .array(
+            zod
+              .object({
+                id: zod.number(),
+                battleId: zod.number(),
+                userId: zod.number(),
+                teamId: zod.number().nullish(),
+                photoUrl: zod.string().nullish(),
+                videoUrl: zod.string().nullish(),
+                caption: zod.string().nullish(),
+                journalNote: zod.string().nullish(),
+                substitutionsUsed: zod.array(zod.string()),
+                status: zod.enum([
+                  "draft",
+                  "submitted",
+                  "approved",
+                  "disqualified",
+                ]),
+                completionScore: zod.number(),
+                creativityScore: zod.number(),
+                presentationScore: zod.number(),
+                peerVotes: zod.number(),
+                totalScore: zod.number(),
+                rank: zod.number().nullish(),
+                submittedAt: zod.coerce.date(),
+              })
+              .and(
+                zod.object({
+                  user: zod.object({
+                    id: zod.number(),
+                    displayName: zod.string(),
+                    username: zod.string(),
+                    email: zod.string(),
+                    avatarUrl: zod.string().nullish(),
+                    bio: zod.string().nullish(),
+                    locationText: zod.string().nullish(),
+                    dietaryPreferences: zod.array(zod.string()),
+                    cookingInterests: zod.array(zod.string()),
+                    role: zod.enum(["user", "moderator", "admin"]),
+                    createdAt: zod.coerce.date(),
+                  }),
+                }),
+              ),
+          )
+          .optional(),
+      }),
+    ),
+});
+export const GetJudgeAssignmentsResponse = zod.array(
+  GetJudgeAssignmentsResponseItem,
+);
+
+/**
+ * @summary Accept a judge assignment
+ */
+export const AcceptJudgeAssignmentParams = zod.object({
+  assignmentId: zod.coerce.number(),
+});
+
+export const AcceptJudgeAssignmentResponse = zod.object({
+  id: zod.number(),
+  judgeUserId: zod.number(),
+  battleId: zod.number(),
+  assignedAt: zod.coerce.date(),
+  completedAt: zod.coerce.date().nullish(),
+  isAccepted: zod.boolean(),
+  compensationAmount: zod.number(),
+  battle: zod
+    .object({
+      id: zod.number(),
+      title: zod.string(),
+      slug: zod.string(),
+      description: zod.string().nullish(),
+      sourceType: zod.enum(["meal", "video", "external"]),
+      sourceMealId: zod.number().nullish(),
+      sourceVideoId: zod.number().nullish(),
+      challengeType: zod.enum([
+        "solo_remake",
+        "team_battle",
+        "remix_battle",
+        "speed_battle",
+        "budget_battle",
+        "ingredient_restriction",
+        "culture_variation",
+      ]),
+      scopeType: zod.enum(["private", "circle", "local", "public", "global"]),
+      battleStatus: zod.enum([
+        "draft",
+        "open",
+        "live",
+        "judging",
+        "completed",
+        "archived",
+      ]),
+      groupId: zod.number().nullish(),
+      createdBy: zod.number(),
+      battleWorthinessScore: zod.number(),
+      maxTeamSize: zod.number(),
+      registrationStart: zod.coerce.date().nullish(),
+      registrationEnd: zod.coerce.date().nullish(),
+      prepStart: zod.coerce.date().nullish(),
+      submissionDeadline: zod.coerce.date().nullish(),
+      judgingEnd: zod.coerce.date().nullish(),
+      participantCount: zod.number(),
+      entryCount: zod.number(),
+      coverImageUrl: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+    })
+    .and(
+      zod.object({
+        creator: zod.object({
+          id: zod.number(),
+          displayName: zod.string(),
+          username: zod.string(),
+          email: zod.string(),
+          avatarUrl: zod.string().nullish(),
+          bio: zod.string().nullish(),
+          locationText: zod.string().nullish(),
+          dietaryPreferences: zod.array(zod.string()),
+          cookingInterests: zod.array(zod.string()),
+          role: zod.enum(["user", "moderator", "admin"]),
+          createdAt: zod.coerce.date(),
+        }),
+        requirements: zod
+          .object({
+            id: zod.number(),
+            battleId: zod.number(),
+            ingredientList: zod.array(zod.string()),
+            optionalSubstitutions: zod.array(zod.string()),
+            toolList: zod.array(zod.string()),
+            estimatedCostMin: zod.number().nullish(),
+            estimatedCostMax: zod.number().nullish(),
+            estimatedTimeMinutes: zod.number().nullish(),
+            difficultyLevel: zod.number(),
+            dietaryNotes: zod.array(zod.string()),
+            regionNotes: zod.string().nullish(),
+          })
+          .nullish(),
+        sourceMeal: zod
+          .object({
+            id: zod.number(),
+            authorId: zod.number(),
+            groupId: zod.number().nullish(),
+            title: zod.string(),
+            description: zod.string().nullish(),
+            mealType: zod.enum([
+              "breakfast",
+              "lunch",
+              "dinner",
+              "snack",
+              "dessert",
+              "brunch",
+              "other",
+            ]),
+            cuisineTags: zod.array(zod.string()),
+            dietaryTags: zod.array(zod.string()),
+            imageUrl: zod.string().nullish(),
+            servings: zod.number().nullish(),
+            shareStatus: zod.enum(["idea", "cooking", "available", "finished"]),
+            locationText: zod.string().nullish(),
+            ingredientsSummary: zod.string().nullish(),
+            instructionsSummary: zod.string().nullish(),
+            likeCount: zod.number(),
+            saveCount: zod.number(),
+            commentCount: zod.number(),
+            createdAt: zod.coerce.date(),
+          })
+          .and(
+            zod.object({
+              author: zod.object({
+                id: zod.number(),
+                displayName: zod.string(),
+                username: zod.string(),
+                email: zod.string(),
+                avatarUrl: zod.string().nullish(),
+                bio: zod.string().nullish(),
+                locationText: zod.string().nullish(),
+                dietaryPreferences: zod.array(zod.string()),
+                cookingInterests: zod.array(zod.string()),
+                role: zod.enum(["user", "moderator", "admin"]),
+                createdAt: zod.coerce.date(),
+              }),
+              group: zod
+                .object({
+                  id: zod.number(),
+                  name: zod.string(),
+                  slug: zod.string(),
+                  description: zod.string().nullish(),
+                  coverImageUrl: zod.string().nullish(),
+                  visibility: zod.enum(["public", "private", "invite_only"]),
+                  createdById: zod.number(),
+                  memberCount: zod.number(),
+                  tags: zod.array(zod.string()),
+                  createdAt: zod.coerce.date(),
+                })
+                .nullish(),
+            }),
+          )
+          .nullish(),
+        sourceVideo: zod
+          .object({
+            id: zod.number(),
+            authorId: zod.number(),
+            linkedMealId: zod.number().nullish(),
+            groupId: zod.number().nullish(),
+            title: zod.string(),
+            caption: zod.string().nullish(),
+            videoUrl: zod.string().nullish(),
+            thumbnailUrl: zod.string().nullish(),
+            durationSeconds: zod.number().nullish(),
+            tags: zod.array(zod.string()),
+            likeCount: zod.number(),
+            saveCount: zod.number(),
+            commentCount: zod.number(),
+            hackStatus: zod.enum([
+              "submitted",
+              "community_voting",
+              "ai_reviewing",
+              "approved",
+              "challenged",
+              "rejected",
+            ]),
+            communityUpvotes: zod.number(),
+            communityDownvotes: zod.number(),
+            aiScore: zod.number().nullish(),
+            aiAnalysis: zod.string().nullish(),
+            aiReviewedAt: zod.coerce.date().nullish(),
+            approvedAt: zod.coerce.date().nullish(),
+            creativeEngagementScore: zod.number(),
+            createdAt: zod.coerce.date(),
+          })
+          .and(
+            zod.object({
+              author: zod.object({
+                id: zod.number(),
+                displayName: zod.string(),
+                username: zod.string(),
+                email: zod.string(),
+                avatarUrl: zod.string().nullish(),
+                bio: zod.string().nullish(),
+                locationText: zod.string().nullish(),
+                dietaryPreferences: zod.array(zod.string()),
+                cookingInterests: zod.array(zod.string()),
+                role: zod.enum(["user", "moderator", "admin"]),
+                createdAt: zod.coerce.date(),
+              }),
+              group: zod
+                .object({
+                  id: zod.number(),
+                  name: zod.string(),
+                  slug: zod.string(),
+                  description: zod.string().nullish(),
+                  coverImageUrl: zod.string().nullish(),
+                  visibility: zod.enum(["public", "private", "invite_only"]),
+                  createdById: zod.number(),
+                  memberCount: zod.number(),
+                  tags: zod.array(zod.string()),
+                  createdAt: zod.coerce.date(),
+                })
+                .nullish(),
+              linkedMeal: zod
+                .object({
+                  id: zod.number(),
+                  authorId: zod.number(),
+                  groupId: zod.number().nullish(),
+                  title: zod.string(),
+                  description: zod.string().nullish(),
+                  mealType: zod.enum([
+                    "breakfast",
+                    "lunch",
+                    "dinner",
+                    "snack",
+                    "dessert",
+                    "brunch",
+                    "other",
+                  ]),
+                  cuisineTags: zod.array(zod.string()),
+                  dietaryTags: zod.array(zod.string()),
+                  imageUrl: zod.string().nullish(),
+                  servings: zod.number().nullish(),
+                  shareStatus: zod.enum([
+                    "idea",
+                    "cooking",
+                    "available",
+                    "finished",
+                  ]),
+                  locationText: zod.string().nullish(),
+                  ingredientsSummary: zod.string().nullish(),
+                  instructionsSummary: zod.string().nullish(),
+                  likeCount: zod.number(),
+                  saveCount: zod.number(),
+                  commentCount: zod.number(),
+                  createdAt: zod.coerce.date(),
+                })
+                .nullish(),
+            }),
+          )
+          .nullish(),
+        topEntries: zod
+          .array(
+            zod
+              .object({
+                id: zod.number(),
+                battleId: zod.number(),
+                userId: zod.number(),
+                teamId: zod.number().nullish(),
+                photoUrl: zod.string().nullish(),
+                videoUrl: zod.string().nullish(),
+                caption: zod.string().nullish(),
+                journalNote: zod.string().nullish(),
+                substitutionsUsed: zod.array(zod.string()),
+                status: zod.enum([
+                  "draft",
+                  "submitted",
+                  "approved",
+                  "disqualified",
+                ]),
+                completionScore: zod.number(),
+                creativityScore: zod.number(),
+                presentationScore: zod.number(),
+                peerVotes: zod.number(),
+                totalScore: zod.number(),
+                rank: zod.number().nullish(),
+                submittedAt: zod.coerce.date(),
+              })
+              .and(
+                zod.object({
+                  user: zod.object({
+                    id: zod.number(),
+                    displayName: zod.string(),
+                    username: zod.string(),
+                    email: zod.string(),
+                    avatarUrl: zod.string().nullish(),
+                    bio: zod.string().nullish(),
+                    locationText: zod.string().nullish(),
+                    dietaryPreferences: zod.array(zod.string()),
+                    cookingInterests: zod.array(zod.string()),
+                    role: zod.enum(["user", "moderator", "admin"]),
+                    createdAt: zod.coerce.date(),
+                  }),
+                }),
+              ),
+          )
+          .optional(),
+      }),
+    ),
+});
+
+/**
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({

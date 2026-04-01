@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -9,11 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, Video, Bookmark, PlusCircle, ChefHat, Swords } from "lucide-react";
+import { Home, Users, Video, Bookmark, PlusCircle, ChefHat, Swords, Building2, Star, LogOut } from "lucide-react";
 
 export function Navbar() {
   const [location] = useLocation();
-  const { data: user } = useCurrentUser();
+  const { data: user, isPartner, isJudge } = useCurrentUser();
+  const { logout } = useAuth();
 
   const navItems = [
     { href: "/", label: "Feed", icon: Home },
@@ -59,6 +61,23 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          {isPartner && (
+            <Link href="/partner/dashboard">
+              <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                <Building2 size={15} />
+                <span>Partner</span>
+              </Button>
+            </Link>
+          )}
+          {isJudge && (
+            <Link href="/judge/queue">
+              <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-1.5 text-purple-600 hover:text-purple-700 hover:bg-purple-50">
+                <Star size={15} />
+                <span>Judge</span>
+              </Button>
+            </Link>
+          )}
+
           <Link href="/create" data-testid="link-create">
             <Button className="rounded-full shadow-md gap-2" size="sm">
               <PlusCircle size={18} />
@@ -97,6 +116,27 @@ export function Navbar() {
                   <Link href={`/profile/${user.id}/edit`} className="cursor-pointer w-full flex items-center" data-testid="link-menu-settings">
                     Settings
                   </Link>
+                </DropdownMenuItem>
+                {isPartner && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/partner/dashboard" className="cursor-pointer w-full flex items-center gap-2 text-blue-600">
+                      <Building2 size={14} /> Partner Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                {isJudge && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/judge/queue" className="cursor-pointer w-full flex items-center gap-2 text-purple-600">
+                      <Star size={14} /> Judge Queue
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-red-600 cursor-pointer flex items-center gap-2"
+                  onClick={logout}
+                >
+                  <LogOut size={14} /> Log Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

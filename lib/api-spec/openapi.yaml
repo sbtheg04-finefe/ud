@@ -9,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication and session management
   - name: users
     description: User operations
   - name: groups
@@ -23,7 +25,232 @@ tags:
     description: Likes, saves, comments
   - name: battles
     description: Battle Engine — cooking challenges and tournaments
+  - name: onboarding
+    description: Multi-tier onboarding flow
+  - name: partner
+    description: Partner brand portal
+  - name: judge
+    description: Judge queue and assignments
 paths:
+  # AUTH
+  /auth/user:
+    get:
+      tags: [auth]
+      operationId: getCurrentAuthUser
+      summary: Get the currently authenticated user
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+      responses:
+        '200':
+          description: Auth status resolved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserEnvelope'
+  /login:
+    get:
+      tags: [auth]
+      operationId: beginBrowserLogin
+      summary: Start the browser OIDC login flow
+      parameters:
+        - name: returnTo
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to the OIDC authorization endpoint.
+  /callback:
+    get:
+      tags: [auth]
+      operationId: handleBrowserLoginCallback
+      summary: Complete the browser OIDC login flow
+      parameters:
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to returnTo on success or /api/login on failure.
+  /logout:
+    get:
+      tags: [auth]
+      operationId: logoutBrowserSession
+      summary: Clear the session and begin OIDC logout
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+      responses:
+        '302':
+          description: Redirect to the OIDC provider logout URL.
+
+  # ONBOARDING
+  /onboarding/status:
+    get:
+      tags: [onboarding]
+      operationId: getOnboardingStatus
+      summary: Get current user's onboarding status
+      responses:
+        '200':
+          description: Onboarding status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingStatus'
+  /onboarding/complete:
+    post:
+      tags: [onboarding]
+      operationId: completeOnboarding
+      summary: Complete onboarding and set user roles + profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteOnboardingBody'
+      responses:
+        '200':
+          description: Onboarding completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserEnvelope'
+
+  # PARTNER
+  /partner/profile:
+    get:
+      tags: [partner]
+      operationId: getPartnerProfile
+      summary: Get the current user's partner profile
+      responses:
+        '200':
+          description: Partner profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartnerProfile'
+    post:
+      tags: [partner]
+      operationId: createPartnerProfile
+      summary: Create or update partner profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePartnerProfileBody'
+      responses:
+        '200':
+          description: Partner profile created/updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartnerProfile'
+  /partner/battles:
+    get:
+      tags: [partner]
+      operationId: getPartnerBattles
+      summary: Get battles sponsored by this partner
+      responses:
+        '200':
+          description: Partner battles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BattleWithDetails'
+  /partner/sponsor:
+    post:
+      tags: [partner]
+      operationId: sponsorBattle
+      summary: Sponsor a battle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SponsorBattleBody'
+      responses:
+        '200':
+          description: Sponsorship created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BattleSponsorship'
+
+  # JUDGE
+  /judge/profile:
+    get:
+      tags: [judge]
+      operationId: getJudgeProfile
+      summary: Get the current user's judge profile
+      responses:
+        '200':
+          description: Judge profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JudgeProfile'
+    post:
+      tags: [judge]
+      operationId: createJudgeProfile
+      summary: Create or update judge profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJudgeProfileBody'
+      responses:
+        '200':
+          description: Judge profile created/updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JudgeProfile'
+  /judge/assignments:
+    get:
+      tags: [judge]
+      operationId: getJudgeAssignments
+      summary: Get battles assigned to this judge
+      responses:
+        '200':
+          description: Judge assignments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JudgeAssignmentWithBattle'
+  /judge/assignments/{assignmentId}/accept:
+    post:
+      tags: [judge]
+      operationId: acceptJudgeAssignment
+      summary: Accept a judge assignment
+      parameters:
+        - name: assignmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Assignment accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JudgeAssignmentWithBattle'
+
   /healthz:
     get:
       operationId: healthCheck
@@ -2234,3 +2461,358 @@ components:
         - battlesEntered
         - battlesWon
         - totalEntries
+
+    # AUTH SCHEMAS
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        replitId:
+          type: string
+        email:
+          type: string
+          nullable: true
+        firstName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        profileImageUrl:
+          type: string
+          nullable: true
+        displayName:
+          type: string
+          nullable: true
+        username:
+          type: string
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [user, partner, judge]
+        onboardingCompleted:
+          type: boolean
+        referralCode:
+          type: string
+          nullable: true
+      required:
+        - id
+        - replitId
+        - roles
+        - onboardingCompleted
+
+    AuthUserEnvelope:
+      type: object
+      properties:
+        user:
+          oneOf:
+            - $ref: '#/components/schemas/AuthUser'
+            - type: 'null'
+      required:
+        - user
+
+    GetCurrentAuthUserResponse:
+      type: object
+      properties:
+        user:
+          oneOf:
+            - $ref: '#/components/schemas/AuthUser'
+            - type: 'null'
+      required:
+        - user
+
+    # ONBOARDING SCHEMAS
+    OnboardingStatus:
+      type: object
+      properties:
+        onboardingCompleted:
+          type: boolean
+        roles:
+          type: array
+          items:
+            type: string
+        userId:
+          type: integer
+      required:
+        - onboardingCompleted
+        - roles
+        - userId
+
+    PartnerProfileInput:
+      type: object
+      properties:
+        brandName:
+          type: string
+        brandCategory:
+          type: string
+        billingEmail:
+          type: string
+        website:
+          type: string
+          nullable: true
+        logoUrl:
+          type: string
+          nullable: true
+
+    JudgeProfileInput:
+      type: object
+      properties:
+        credentials:
+          type: string
+          nullable: true
+        specialties:
+          type: array
+          items:
+            type: string
+        bio:
+          type: string
+          nullable: true
+        yearsExperience:
+          type: integer
+
+    CompleteOnboardingBody:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [user, partner, judge]
+        displayName:
+          type: string
+        username:
+          type: string
+        bio:
+          type: string
+          nullable: true
+        referralCode:
+          type: string
+          nullable: true
+        partnerProfile:
+          $ref: '#/components/schemas/PartnerProfileInput'
+          nullable: true
+        judgeProfile:
+          $ref: '#/components/schemas/JudgeProfileInput'
+          nullable: true
+      required:
+        - roles
+
+    # PARTNER SCHEMAS
+    PartnerProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        brandName:
+          type: string
+        brandCategory:
+          type: string
+        website:
+          type: string
+          nullable: true
+        logoUrl:
+          type: string
+          nullable: true
+        billingEmail:
+          type: string
+        monthlyBudget:
+          type: number
+        activeSponsorships:
+          type: integer
+        totalSponsored:
+          type: integer
+        isVerified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - brandName
+        - brandCategory
+        - billingEmail
+        - monthlyBudget
+        - activeSponsorships
+        - totalSponsored
+        - isVerified
+        - createdAt
+
+    CreatePartnerProfileBody:
+      type: object
+      properties:
+        brandName:
+          type: string
+        brandCategory:
+          type: string
+        billingEmail:
+          type: string
+        website:
+          type: string
+          nullable: true
+        logoUrl:
+          type: string
+          nullable: true
+      required:
+        - brandName
+        - brandCategory
+        - billingEmail
+
+    SponsorBattleBody:
+      type: object
+      properties:
+        battleId:
+          type: integer
+        sponsorshipAmount:
+          type: number
+        prizeDescription:
+          type: string
+          nullable: true
+        logoUrl:
+          type: string
+          nullable: true
+      required:
+        - battleId
+
+    BattleSponsorship:
+      type: object
+      properties:
+        id:
+          type: integer
+        battleId:
+          type: integer
+        partnerUserId:
+          type: integer
+        sponsorshipAmount:
+          type: number
+        prizeDescription:
+          type: string
+          nullable: true
+        logoUrl:
+          type: string
+          nullable: true
+        visibilityBoost:
+          type: number
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - battleId
+        - partnerUserId
+        - sponsorshipAmount
+        - visibilityBoost
+        - isActive
+        - createdAt
+
+    # JUDGE SCHEMAS
+    JudgeProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        credentials:
+          type: string
+          nullable: true
+        specialties:
+          type: array
+          items:
+            type: string
+        bio:
+          type: string
+          nullable: true
+        yearsExperience:
+          type: integer
+        totalJudged:
+          type: integer
+        averageRating:
+          type: number
+          nullable: true
+        isVerified:
+          type: boolean
+        isAvailable:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - specialties
+        - yearsExperience
+        - totalJudged
+        - isVerified
+        - isAvailable
+        - createdAt
+
+    CreateJudgeProfileBody:
+      type: object
+      properties:
+        credentials:
+          type: string
+          nullable: true
+        specialties:
+          type: array
+          items:
+            type: string
+        bio:
+          type: string
+          nullable: true
+        yearsExperience:
+          type: integer
+
+    JudgeAssignmentWithBattle:
+      type: object
+      properties:
+        id:
+          type: integer
+        judgeUserId:
+          type: integer
+        battleId:
+          type: integer
+        assignedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        isAccepted:
+          type: boolean
+        compensationAmount:
+          type: number
+        battle:
+          $ref: '#/components/schemas/BattleWithDetails'
+      required:
+        - id
+        - judgeUserId
+        - battleId
+        - assignedAt
+        - isAccepted
+        - compensationAmount
+        - battle
+
+  parameters:
+    AuthorizationSessionHeader:
+      name: Authorization
+      in: header
+      required: false
+      schema:
+        type: string
+      description: Bearer session token (for mobile clients)
+    SessionCookie:
+      name: sid
+      in: cookie
+      required: false
+      schema:
+        type: string
+      description: Session cookie (for web clients)

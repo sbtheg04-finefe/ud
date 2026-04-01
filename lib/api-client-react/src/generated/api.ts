@@ -17,15 +17,21 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AuthUserEnvelope,
   BattleEntryWithUser,
+  BattleSponsorship,
   BattleWithDetails,
+  BeginBrowserLoginParams,
   CandidateScore,
   Comment,
+  CompleteOnboardingBody,
   CreateBattleBody,
   CreateCommentBody,
   CreateFromContentBody,
   CreateGroupBody,
+  CreateJudgeProfileBody,
   CreateMealBody,
+  CreatePartnerProfileBody,
   CreateUserBody,
   CreateVideoBody,
   FeedResponse,
@@ -39,19 +45,25 @@ import type {
   GroupStats,
   HackReviewResult,
   HackVoteBody,
+  HandleBrowserLoginCallbackParams,
   HealthStatus,
   JoinBattle200,
   JoinBattleBody,
   JoinGroupBody,
+  JudgeAssignmentWithBattle,
+  JudgeProfile,
   LeaderboardEntry,
   ListBattlesParams,
   ListMealsParams,
   ListVideosParams,
   MealWithAuthor,
+  OnboardingStatus,
+  PartnerProfile,
   ReactionResult,
   SaveResult,
   SavedItemsResponse,
   ScoreCandidateBody,
+  SponsorBattleBody,
   SubmitEntryBody,
   SubmitHackForReviewBody,
   ToggleReactionBody,
@@ -74,6 +86,1163 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+/**
+ * @summary Get the currently authenticated user
+ */
+export const getGetCurrentAuthUserUrl = () => {
+  return `/api/auth/user`;
+};
+
+export const getCurrentAuthUser = async (
+  options?: RequestInit,
+): Promise<AuthUserEnvelope> => {
+  return customFetch<AuthUserEnvelope>(getGetCurrentAuthUserUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCurrentAuthUserQueryKey = () => {
+  return [`/api/auth/user`] as const;
+};
+
+export const getGetCurrentAuthUserQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCurrentAuthUser>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getCurrentAuthUser>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCurrentAuthUserQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCurrentAuthUser>>
+  > = ({ signal }) => getCurrentAuthUser({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCurrentAuthUser>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCurrentAuthUserQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCurrentAuthUser>>
+>;
+export type GetCurrentAuthUserQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get the currently authenticated user
+ */
+
+export function useGetCurrentAuthUser<
+  TData = Awaited<ReturnType<typeof getCurrentAuthUser>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getCurrentAuthUser>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCurrentAuthUserQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Start the browser OIDC login flow
+ */
+export const getBeginBrowserLoginUrl = (params?: BeginBrowserLoginParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/login?${stringifiedParams}`
+    : `/api/login`;
+};
+
+export const beginBrowserLogin = async (
+  params?: BeginBrowserLoginParams,
+  options?: RequestInit,
+): Promise<unknown> => {
+  return customFetch<unknown>(getBeginBrowserLoginUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getBeginBrowserLoginQueryKey = (
+  params?: BeginBrowserLoginParams,
+) => {
+  return [`/api/login`, ...(params ? [params] : [])] as const;
+};
+
+export const getBeginBrowserLoginQueryOptions = <
+  TData = Awaited<ReturnType<typeof beginBrowserLogin>>,
+  TError = ErrorType<void>,
+>(
+  params?: BeginBrowserLoginParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof beginBrowserLogin>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getBeginBrowserLoginQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof beginBrowserLogin>>
+  > = ({ signal }) => beginBrowserLogin(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof beginBrowserLogin>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type BeginBrowserLoginQueryResult = NonNullable<
+  Awaited<ReturnType<typeof beginBrowserLogin>>
+>;
+export type BeginBrowserLoginQueryError = ErrorType<void>;
+
+/**
+ * @summary Start the browser OIDC login flow
+ */
+
+export function useBeginBrowserLogin<
+  TData = Awaited<ReturnType<typeof beginBrowserLogin>>,
+  TError = ErrorType<void>,
+>(
+  params?: BeginBrowserLoginParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof beginBrowserLogin>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getBeginBrowserLoginQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Complete the browser OIDC login flow
+ */
+export const getHandleBrowserLoginCallbackUrl = (
+  params?: HandleBrowserLoginCallbackParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/callback?${stringifiedParams}`
+    : `/api/callback`;
+};
+
+export const handleBrowserLoginCallback = async (
+  params?: HandleBrowserLoginCallbackParams,
+  options?: RequestInit,
+): Promise<unknown> => {
+  return customFetch<unknown>(getHandleBrowserLoginCallbackUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getHandleBrowserLoginCallbackQueryKey = (
+  params?: HandleBrowserLoginCallbackParams,
+) => {
+  return [`/api/callback`, ...(params ? [params] : [])] as const;
+};
+
+export const getHandleBrowserLoginCallbackQueryOptions = <
+  TData = Awaited<ReturnType<typeof handleBrowserLoginCallback>>,
+  TError = ErrorType<void>,
+>(
+  params?: HandleBrowserLoginCallbackParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof handleBrowserLoginCallback>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getHandleBrowserLoginCallbackQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof handleBrowserLoginCallback>>
+  > = ({ signal }) =>
+    handleBrowserLoginCallback(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof handleBrowserLoginCallback>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type HandleBrowserLoginCallbackQueryResult = NonNullable<
+  Awaited<ReturnType<typeof handleBrowserLoginCallback>>
+>;
+export type HandleBrowserLoginCallbackQueryError = ErrorType<void>;
+
+/**
+ * @summary Complete the browser OIDC login flow
+ */
+
+export function useHandleBrowserLoginCallback<
+  TData = Awaited<ReturnType<typeof handleBrowserLoginCallback>>,
+  TError = ErrorType<void>,
+>(
+  params?: HandleBrowserLoginCallbackParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof handleBrowserLoginCallback>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getHandleBrowserLoginCallbackQueryOptions(
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Clear the session and begin OIDC logout
+ */
+export const getLogoutBrowserSessionUrl = () => {
+  return `/api/logout`;
+};
+
+export const logoutBrowserSession = async (
+  options?: RequestInit,
+): Promise<unknown> => {
+  return customFetch<unknown>(getLogoutBrowserSessionUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getLogoutBrowserSessionQueryKey = () => {
+  return [`/api/logout`] as const;
+};
+
+export const getLogoutBrowserSessionQueryOptions = <
+  TData = Awaited<ReturnType<typeof logoutBrowserSession>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof logoutBrowserSession>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getLogoutBrowserSessionQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof logoutBrowserSession>>
+  > = ({ signal }) => logoutBrowserSession({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof logoutBrowserSession>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type LogoutBrowserSessionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof logoutBrowserSession>>
+>;
+export type LogoutBrowserSessionQueryError = ErrorType<void>;
+
+/**
+ * @summary Clear the session and begin OIDC logout
+ */
+
+export function useLogoutBrowserSession<
+  TData = Awaited<ReturnType<typeof logoutBrowserSession>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof logoutBrowserSession>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getLogoutBrowserSessionQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get current user's onboarding status
+ */
+export const getGetOnboardingStatusUrl = () => {
+  return `/api/onboarding/status`;
+};
+
+export const getOnboardingStatus = async (
+  options?: RequestInit,
+): Promise<OnboardingStatus> => {
+  return customFetch<OnboardingStatus>(getGetOnboardingStatusUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetOnboardingStatusQueryKey = () => {
+  return [`/api/onboarding/status`] as const;
+};
+
+export const getGetOnboardingStatusQueryOptions = <
+  TData = Awaited<ReturnType<typeof getOnboardingStatus>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getOnboardingStatus>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetOnboardingStatusQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getOnboardingStatus>>
+  > = ({ signal }) => getOnboardingStatus({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getOnboardingStatus>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetOnboardingStatusQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getOnboardingStatus>>
+>;
+export type GetOnboardingStatusQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get current user's onboarding status
+ */
+
+export function useGetOnboardingStatus<
+  TData = Awaited<ReturnType<typeof getOnboardingStatus>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getOnboardingStatus>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetOnboardingStatusQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Complete onboarding and set user roles + profile
+ */
+export const getCompleteOnboardingUrl = () => {
+  return `/api/onboarding/complete`;
+};
+
+export const completeOnboarding = async (
+  completeOnboardingBody: CompleteOnboardingBody,
+  options?: RequestInit,
+): Promise<AuthUserEnvelope> => {
+  return customFetch<AuthUserEnvelope>(getCompleteOnboardingUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(completeOnboardingBody),
+  });
+};
+
+export const getCompleteOnboardingMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof completeOnboarding>>,
+    TError,
+    { data: BodyType<CompleteOnboardingBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof completeOnboarding>>,
+  TError,
+  { data: BodyType<CompleteOnboardingBody> },
+  TContext
+> => {
+  const mutationKey = ["completeOnboarding"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof completeOnboarding>>,
+    { data: BodyType<CompleteOnboardingBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return completeOnboarding(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CompleteOnboardingMutationResult = NonNullable<
+  Awaited<ReturnType<typeof completeOnboarding>>
+>;
+export type CompleteOnboardingMutationBody = BodyType<CompleteOnboardingBody>;
+export type CompleteOnboardingMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Complete onboarding and set user roles + profile
+ */
+export const useCompleteOnboarding = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof completeOnboarding>>,
+    TError,
+    { data: BodyType<CompleteOnboardingBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof completeOnboarding>>,
+  TError,
+  { data: BodyType<CompleteOnboardingBody> },
+  TContext
+> => {
+  return useMutation(getCompleteOnboardingMutationOptions(options));
+};
+
+/**
+ * @summary Get the current user's partner profile
+ */
+export const getGetPartnerProfileUrl = () => {
+  return `/api/partner/profile`;
+};
+
+export const getPartnerProfile = async (
+  options?: RequestInit,
+): Promise<PartnerProfile> => {
+  return customFetch<PartnerProfile>(getGetPartnerProfileUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPartnerProfileQueryKey = () => {
+  return [`/api/partner/profile`] as const;
+};
+
+export const getGetPartnerProfileQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPartnerProfile>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getPartnerProfile>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPartnerProfileQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPartnerProfile>>
+  > = ({ signal }) => getPartnerProfile({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPartnerProfile>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPartnerProfileQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPartnerProfile>>
+>;
+export type GetPartnerProfileQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get the current user's partner profile
+ */
+
+export function useGetPartnerProfile<
+  TData = Awaited<ReturnType<typeof getPartnerProfile>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getPartnerProfile>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPartnerProfileQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create or update partner profile
+ */
+export const getCreatePartnerProfileUrl = () => {
+  return `/api/partner/profile`;
+};
+
+export const createPartnerProfile = async (
+  createPartnerProfileBody: CreatePartnerProfileBody,
+  options?: RequestInit,
+): Promise<PartnerProfile> => {
+  return customFetch<PartnerProfile>(getCreatePartnerProfileUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createPartnerProfileBody),
+  });
+};
+
+export const getCreatePartnerProfileMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPartnerProfile>>,
+    TError,
+    { data: BodyType<CreatePartnerProfileBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createPartnerProfile>>,
+  TError,
+  { data: BodyType<CreatePartnerProfileBody> },
+  TContext
+> => {
+  const mutationKey = ["createPartnerProfile"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createPartnerProfile>>,
+    { data: BodyType<CreatePartnerProfileBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createPartnerProfile(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreatePartnerProfileMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createPartnerProfile>>
+>;
+export type CreatePartnerProfileMutationBody =
+  BodyType<CreatePartnerProfileBody>;
+export type CreatePartnerProfileMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create or update partner profile
+ */
+export const useCreatePartnerProfile = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPartnerProfile>>,
+    TError,
+    { data: BodyType<CreatePartnerProfileBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createPartnerProfile>>,
+  TError,
+  { data: BodyType<CreatePartnerProfileBody> },
+  TContext
+> => {
+  return useMutation(getCreatePartnerProfileMutationOptions(options));
+};
+
+/**
+ * @summary Get battles sponsored by this partner
+ */
+export const getGetPartnerBattlesUrl = () => {
+  return `/api/partner/battles`;
+};
+
+export const getPartnerBattles = async (
+  options?: RequestInit,
+): Promise<BattleWithDetails[]> => {
+  return customFetch<BattleWithDetails[]>(getGetPartnerBattlesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPartnerBattlesQueryKey = () => {
+  return [`/api/partner/battles`] as const;
+};
+
+export const getGetPartnerBattlesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPartnerBattles>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getPartnerBattles>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPartnerBattlesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPartnerBattles>>
+  > = ({ signal }) => getPartnerBattles({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPartnerBattles>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPartnerBattlesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPartnerBattles>>
+>;
+export type GetPartnerBattlesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get battles sponsored by this partner
+ */
+
+export function useGetPartnerBattles<
+  TData = Awaited<ReturnType<typeof getPartnerBattles>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getPartnerBattles>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPartnerBattlesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Sponsor a battle
+ */
+export const getSponsorBattleUrl = () => {
+  return `/api/partner/sponsor`;
+};
+
+export const sponsorBattle = async (
+  sponsorBattleBody: SponsorBattleBody,
+  options?: RequestInit,
+): Promise<BattleSponsorship> => {
+  return customFetch<BattleSponsorship>(getSponsorBattleUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(sponsorBattleBody),
+  });
+};
+
+export const getSponsorBattleMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sponsorBattle>>,
+    TError,
+    { data: BodyType<SponsorBattleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sponsorBattle>>,
+  TError,
+  { data: BodyType<SponsorBattleBody> },
+  TContext
+> => {
+  const mutationKey = ["sponsorBattle"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sponsorBattle>>,
+    { data: BodyType<SponsorBattleBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return sponsorBattle(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SponsorBattleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sponsorBattle>>
+>;
+export type SponsorBattleMutationBody = BodyType<SponsorBattleBody>;
+export type SponsorBattleMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Sponsor a battle
+ */
+export const useSponsorBattle = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sponsorBattle>>,
+    TError,
+    { data: BodyType<SponsorBattleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sponsorBattle>>,
+  TError,
+  { data: BodyType<SponsorBattleBody> },
+  TContext
+> => {
+  return useMutation(getSponsorBattleMutationOptions(options));
+};
+
+/**
+ * @summary Get the current user's judge profile
+ */
+export const getGetJudgeProfileUrl = () => {
+  return `/api/judge/profile`;
+};
+
+export const getJudgeProfile = async (
+  options?: RequestInit,
+): Promise<JudgeProfile> => {
+  return customFetch<JudgeProfile>(getGetJudgeProfileUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetJudgeProfileQueryKey = () => {
+  return [`/api/judge/profile`] as const;
+};
+
+export const getGetJudgeProfileQueryOptions = <
+  TData = Awaited<ReturnType<typeof getJudgeProfile>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getJudgeProfile>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetJudgeProfileQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getJudgeProfile>>> = ({
+    signal,
+  }) => getJudgeProfile({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getJudgeProfile>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetJudgeProfileQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getJudgeProfile>>
+>;
+export type GetJudgeProfileQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get the current user's judge profile
+ */
+
+export function useGetJudgeProfile<
+  TData = Awaited<ReturnType<typeof getJudgeProfile>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getJudgeProfile>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetJudgeProfileQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create or update judge profile
+ */
+export const getCreateJudgeProfileUrl = () => {
+  return `/api/judge/profile`;
+};
+
+export const createJudgeProfile = async (
+  createJudgeProfileBody: CreateJudgeProfileBody,
+  options?: RequestInit,
+): Promise<JudgeProfile> => {
+  return customFetch<JudgeProfile>(getCreateJudgeProfileUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createJudgeProfileBody),
+  });
+};
+
+export const getCreateJudgeProfileMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createJudgeProfile>>,
+    TError,
+    { data: BodyType<CreateJudgeProfileBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createJudgeProfile>>,
+  TError,
+  { data: BodyType<CreateJudgeProfileBody> },
+  TContext
+> => {
+  const mutationKey = ["createJudgeProfile"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createJudgeProfile>>,
+    { data: BodyType<CreateJudgeProfileBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createJudgeProfile(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateJudgeProfileMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createJudgeProfile>>
+>;
+export type CreateJudgeProfileMutationBody = BodyType<CreateJudgeProfileBody>;
+export type CreateJudgeProfileMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create or update judge profile
+ */
+export const useCreateJudgeProfile = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createJudgeProfile>>,
+    TError,
+    { data: BodyType<CreateJudgeProfileBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createJudgeProfile>>,
+  TError,
+  { data: BodyType<CreateJudgeProfileBody> },
+  TContext
+> => {
+  return useMutation(getCreateJudgeProfileMutationOptions(options));
+};
+
+/**
+ * @summary Get battles assigned to this judge
+ */
+export const getGetJudgeAssignmentsUrl = () => {
+  return `/api/judge/assignments`;
+};
+
+export const getJudgeAssignments = async (
+  options?: RequestInit,
+): Promise<JudgeAssignmentWithBattle[]> => {
+  return customFetch<JudgeAssignmentWithBattle[]>(getGetJudgeAssignmentsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetJudgeAssignmentsQueryKey = () => {
+  return [`/api/judge/assignments`] as const;
+};
+
+export const getGetJudgeAssignmentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getJudgeAssignments>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getJudgeAssignments>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetJudgeAssignmentsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getJudgeAssignments>>
+  > = ({ signal }) => getJudgeAssignments({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getJudgeAssignments>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetJudgeAssignmentsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getJudgeAssignments>>
+>;
+export type GetJudgeAssignmentsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get battles assigned to this judge
+ */
+
+export function useGetJudgeAssignments<
+  TData = Awaited<ReturnType<typeof getJudgeAssignments>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getJudgeAssignments>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetJudgeAssignmentsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Accept a judge assignment
+ */
+export const getAcceptJudgeAssignmentUrl = (assignmentId: number) => {
+  return `/api/judge/assignments/${assignmentId}/accept`;
+};
+
+export const acceptJudgeAssignment = async (
+  assignmentId: number,
+  options?: RequestInit,
+): Promise<JudgeAssignmentWithBattle> => {
+  return customFetch<JudgeAssignmentWithBattle>(
+    getAcceptJudgeAssignmentUrl(assignmentId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getAcceptJudgeAssignmentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof acceptJudgeAssignment>>,
+    TError,
+    { assignmentId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof acceptJudgeAssignment>>,
+  TError,
+  { assignmentId: number },
+  TContext
+> => {
+  const mutationKey = ["acceptJudgeAssignment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof acceptJudgeAssignment>>,
+    { assignmentId: number }
+  > = (props) => {
+    const { assignmentId } = props ?? {};
+
+    return acceptJudgeAssignment(assignmentId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AcceptJudgeAssignmentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof acceptJudgeAssignment>>
+>;
+
+export type AcceptJudgeAssignmentMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Accept a judge assignment
+ */
+export const useAcceptJudgeAssignment = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof acceptJudgeAssignment>>,
+    TError,
+    { assignmentId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof acceptJudgeAssignment>>,
+  TError,
+  { assignmentId: number },
+  TContext
+> => {
+  return useMutation(getAcceptJudgeAssignmentMutationOptions(options));
+};
 
 /**
  * @summary Health check
