@@ -37,6 +37,8 @@ import type {
   Group,
   GroupMember,
   GroupStats,
+  HackReviewResult,
+  HackVoteBody,
   HealthStatus,
   JoinBattle200,
   JoinBattleBody,
@@ -51,10 +53,12 @@ import type {
   SavedItemsResponse,
   ScoreCandidateBody,
   SubmitEntryBody,
+  SubmitHackForReviewBody,
   ToggleReactionBody,
   ToggleSaveBody,
   TrackBattleInterest201,
   TrackInterestBody,
+  TriggerHackAIReviewBody,
   UpdateMealBody,
   UpdateUserBody,
   User,
@@ -2013,6 +2017,267 @@ export const useDeleteVideo = <
   TContext
 > => {
   return useMutation(getDeleteVideoMutationOptions(options));
+};
+
+/**
+ * @summary Cast or toggle a community vote on a hack
+ */
+export const getVoteOnHackUrl = (videoId: number) => {
+  return `/api/videos/${videoId}/vote`;
+};
+
+export const voteOnHack = async (
+  videoId: number,
+  hackVoteBody: HackVoteBody,
+  options?: RequestInit,
+): Promise<VideoWithAuthor> => {
+  return customFetch<VideoWithAuthor>(getVoteOnHackUrl(videoId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(hackVoteBody),
+  });
+};
+
+export const getVoteOnHackMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof voteOnHack>>,
+    TError,
+    { videoId: number; data: BodyType<HackVoteBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof voteOnHack>>,
+  TError,
+  { videoId: number; data: BodyType<HackVoteBody> },
+  TContext
+> => {
+  const mutationKey = ["voteOnHack"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof voteOnHack>>,
+    { videoId: number; data: BodyType<HackVoteBody> }
+  > = (props) => {
+    const { videoId, data } = props ?? {};
+
+    return voteOnHack(videoId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type VoteOnHackMutationResult = NonNullable<
+  Awaited<ReturnType<typeof voteOnHack>>
+>;
+export type VoteOnHackMutationBody = BodyType<HackVoteBody>;
+export type VoteOnHackMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Cast or toggle a community vote on a hack
+ */
+export const useVoteOnHack = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof voteOnHack>>,
+    TError,
+    { videoId: number; data: BodyType<HackVoteBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof voteOnHack>>,
+  TError,
+  { videoId: number; data: BodyType<HackVoteBody> },
+  TContext
+> => {
+  return useMutation(getVoteOnHackMutationOptions(options));
+};
+
+/**
+ * @summary Submit a hack for AI review (requires minimum community upvotes)
+ */
+export const getSubmitHackForReviewUrl = (videoId: number) => {
+  return `/api/videos/${videoId}/submit-for-review`;
+};
+
+export const submitHackForReview = async (
+  videoId: number,
+  submitHackForReviewBody: SubmitHackForReviewBody,
+  options?: RequestInit,
+): Promise<HackReviewResult> => {
+  return customFetch<HackReviewResult>(getSubmitHackForReviewUrl(videoId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(submitHackForReviewBody),
+  });
+};
+
+export const getSubmitHackForReviewMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitHackForReview>>,
+    TError,
+    { videoId: number; data: BodyType<SubmitHackForReviewBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitHackForReview>>,
+  TError,
+  { videoId: number; data: BodyType<SubmitHackForReviewBody> },
+  TContext
+> => {
+  const mutationKey = ["submitHackForReview"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitHackForReview>>,
+    { videoId: number; data: BodyType<SubmitHackForReviewBody> }
+  > = (props) => {
+    const { videoId, data } = props ?? {};
+
+    return submitHackForReview(videoId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitHackForReviewMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitHackForReview>>
+>;
+export type SubmitHackForReviewMutationBody = BodyType<SubmitHackForReviewBody>;
+export type SubmitHackForReviewMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Submit a hack for AI review (requires minimum community upvotes)
+ */
+export const useSubmitHackForReview = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitHackForReview>>,
+    TError,
+    { videoId: number; data: BodyType<SubmitHackForReviewBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof submitHackForReview>>,
+  TError,
+  { videoId: number; data: BodyType<SubmitHackForReviewBody> },
+  TContext
+> => {
+  return useMutation(getSubmitHackForReviewMutationOptions(options));
+};
+
+/**
+ * @summary Directly trigger AI review on a hack (admin)
+ */
+export const getTriggerHackAIReviewUrl = (videoId: number) => {
+  return `/api/videos/${videoId}/ai-review`;
+};
+
+export const triggerHackAIReview = async (
+  videoId: number,
+  triggerHackAIReviewBody: TriggerHackAIReviewBody,
+  options?: RequestInit,
+): Promise<HackReviewResult> => {
+  return customFetch<HackReviewResult>(getTriggerHackAIReviewUrl(videoId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(triggerHackAIReviewBody),
+  });
+};
+
+export const getTriggerHackAIReviewMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof triggerHackAIReview>>,
+    TError,
+    { videoId: number; data: BodyType<TriggerHackAIReviewBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof triggerHackAIReview>>,
+  TError,
+  { videoId: number; data: BodyType<TriggerHackAIReviewBody> },
+  TContext
+> => {
+  const mutationKey = ["triggerHackAIReview"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof triggerHackAIReview>>,
+    { videoId: number; data: BodyType<TriggerHackAIReviewBody> }
+  > = (props) => {
+    const { videoId, data } = props ?? {};
+
+    return triggerHackAIReview(videoId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TriggerHackAIReviewMutationResult = NonNullable<
+  Awaited<ReturnType<typeof triggerHackAIReview>>
+>;
+export type TriggerHackAIReviewMutationBody = BodyType<TriggerHackAIReviewBody>;
+export type TriggerHackAIReviewMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Directly trigger AI review on a hack (admin)
+ */
+export const useTriggerHackAIReview = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof triggerHackAIReview>>,
+    TError,
+    { videoId: number; data: BodyType<TriggerHackAIReviewBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof triggerHackAIReview>>,
+  TError,
+  { videoId: number; data: BodyType<TriggerHackAIReviewBody> },
+  TContext
+> => {
+  return useMutation(getTriggerHackAIReviewMutationOptions(options));
 };
 
 /**

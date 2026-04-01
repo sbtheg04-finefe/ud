@@ -6,6 +6,8 @@
   "scripts": {
     "hello": "tsx ./src/hello.ts",
     "seed": "tsx ./src/seed.ts",
+    "seed-battles": "tsx ./src/seed-battles.ts",
+    "seed-hack-approvals": "tsx ./src/seed-hack-approvals.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

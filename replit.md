@@ -125,6 +125,20 @@ Battle Engine pages: `battles.tsx` (discover/arena with status + scope filters),
 - Challenge types: solo_remake, team_battle, remix_battle, speed_battle, budget_battle
 - Scope types: circle, local, public, global
 
+**Hacks / Community Approval Engine:**
+- Hacks page redesigned as a community voting + AI approval system
+- Status pipeline: submitted → community_voting → ai_reviewing → approved / challenged / rejected
+- Upvote/downvote on each hack card; 3+ votes triggers `community_voting` status
+- "Ask AI to Review" button appears once a hack reaches 2+ upvotes
+- AI engine (`artifacts/api-server/src/lib/hack-ai-reviewer.ts`) scores on 4 dimensions: clarity, originality, practicality, community resonance — weighted composite 0-10
+- Score ≥ 7.5 → approved and added to Community Cookbook; 5.5-7.5 → challenged; < 5.5 → rejected
+- Approved hacks show AI score meter, "AI Verdict" expandable with full analysis text
+- Community Cookbook showcase at top of Hacks page (top 3 approved by AI score)
+- Creative engagement score tracked per video (likes + saves×2 + upvotes×3 + comments)
+- New DB table: `hack_votes` (video_id, user_id, vote_type, unique constraint)
+- New video fields: hackStatus, communityUpvotes, communityDownvotes, aiScore, aiAnalysis, aiReviewedAt, approvedAt, creativeEngagementScore
+- New API routes: POST `/videos/:id/vote`, POST `/videos/:id/submit-for-review`, POST `/videos/:id/ai-review`
+
 **DB tables:** battles, battle_requirements, battle_entries, battle_teams, battle_team_members, battle_interest, battle_rounds
 
 **Seed data:** 6 demo battles, entries, interest tracking (`scripts/src/seed-battles.ts`)

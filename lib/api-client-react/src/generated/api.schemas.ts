@@ -267,6 +267,18 @@ export interface UpdateMealBody {
   instructionsSummary?: string | null;
 }
 
+export type VideoHackStatus =
+  (typeof VideoHackStatus)[keyof typeof VideoHackStatus];
+
+export const VideoHackStatus = {
+  submitted: "submitted",
+  community_voting: "community_voting",
+  ai_reviewing: "ai_reviewing",
+  approved: "approved",
+  challenged: "challenged",
+  rejected: "rejected",
+} as const;
+
 export interface Video {
   id: number;
   authorId: number;
@@ -281,13 +293,62 @@ export interface Video {
   likeCount: number;
   saveCount: number;
   commentCount: number;
+  hackStatus: VideoHackStatus;
+  communityUpvotes: number;
+  communityDownvotes: number;
+  aiScore?: number | null;
+  aiAnalysis?: string | null;
+  aiReviewedAt?: string | null;
+  approvedAt?: string | null;
+  creativeEngagementScore: number;
   createdAt: string;
 }
+
+export type HackVoteBodyVoteType =
+  (typeof HackVoteBodyVoteType)[keyof typeof HackVoteBodyVoteType];
+
+export const HackVoteBodyVoteType = {
+  up: "up",
+  down: "down",
+} as const;
+
+export interface HackVoteBody {
+  userId: number;
+  voteType: HackVoteBodyVoteType;
+}
+
+export interface HackAIDimensions {
+  clarity: number;
+  originality: number;
+  practicality: number;
+  communityResonance: number;
+}
+
+export type HackReviewResultAiResultVerdict =
+  (typeof HackReviewResultAiResultVerdict)[keyof typeof HackReviewResultAiResultVerdict];
+
+export const HackReviewResultAiResultVerdict = {
+  approved: "approved",
+  challenged: "challenged",
+  rejected: "rejected",
+} as const;
+
+export type HackReviewResultAiResult = {
+  score: number;
+  analysis: string;
+  dimensions: HackAIDimensions;
+  verdict: HackReviewResultAiResultVerdict;
+  badge: string;
+};
 
 export type VideoWithAuthor = Video & {
   author: User;
   group?: Group | null;
   linkedMeal?: Meal | null;
+};
+
+export type HackReviewResult = VideoWithAuthor & {
+  aiResult?: HackReviewResultAiResult;
 };
 
 export interface CreateVideoBody {
@@ -725,6 +786,27 @@ export type ListVideosParams = {
   authorId?: number;
   limit?: number;
   offset?: number;
+  hackStatus?: ListVideosHackStatus;
+};
+
+export type ListVideosHackStatus =
+  (typeof ListVideosHackStatus)[keyof typeof ListVideosHackStatus];
+
+export const ListVideosHackStatus = {
+  submitted: "submitted",
+  community_voting: "community_voting",
+  ai_reviewing: "ai_reviewing",
+  approved: "approved",
+  challenged: "challenged",
+  rejected: "rejected",
+} as const;
+
+export type SubmitHackForReviewBody = {
+  userId: number;
+};
+
+export type TriggerHackAIReviewBody = {
+  userId: number;
 };
 
 export type GetFeedParams = {

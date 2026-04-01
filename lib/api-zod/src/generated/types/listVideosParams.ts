@@ -5,10 +5,12 @@
  * PlatePair API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ListVideosHackStatus } from "./listVideosHackStatus";
 
 export type ListVideosParams = {
   groupId?: number;
   authorId?: number;
   limit?: number;
   offset?: number;
+  hackStatus?: ListVideosHackStatus;
 };

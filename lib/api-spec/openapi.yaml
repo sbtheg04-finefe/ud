@@ -434,6 +434,12 @@ paths:
           required: false
           schema:
             type: integer
+        - name: hackStatus
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [submitted, community_voting, ai_reviewing, approved, challenged, rejected]
       responses:
         "200":
           description: List of videos
@@ -492,6 +498,89 @@ paths:
       responses:
         "204":
           description: Deleted
+
+  /videos/{videoId}/vote:
+    post:
+      operationId: voteOnHack
+      tags: [videos]
+      summary: Cast or toggle a community vote on a hack
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HackVoteBody"
+      responses:
+        "200":
+          description: Updated video with vote counts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoWithAuthor"
+
+  /videos/{videoId}/submit-for-review:
+    post:
+      operationId: submitHackForReview
+      tags: [videos]
+      summary: Submit a hack for AI review (requires minimum community upvotes)
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+              required: [userId]
+      responses:
+        "200":
+          description: AI review result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HackReviewResult"
+
+  /videos/{videoId}/ai-review:
+    post:
+      operationId: triggerHackAIReview
+      tags: [videos]
+      summary: Directly trigger AI review on a hack (admin)
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+              required: [userId]
+      responses:
+        "200":
+          description: AI review result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HackReviewResult"
 
   # FEED
   /feed:
@@ -1384,6 +1473,29 @@ components:
           type: integer
         commentCount:
           type: integer
+        hackStatus:
+          type: string
+          enum: [submitted, community_voting, ai_reviewing, approved, challenged, rejected]
+        communityUpvotes:
+          type: integer
+        communityDownvotes:
+          type: integer
+        aiScore:
+          type: number
+          nullable: true
+        aiAnalysis:
+          type: string
+          nullable: true
+        aiReviewedAt:
+          type: string
+          format: date-time
+          nullable: true
+        approvedAt:
+          type: string
+          format: date-time
+          nullable: true
+        creativeEngagementScore:
+          type: integer
         createdAt:
           type: string
           format: date-time
@@ -1395,7 +1507,66 @@ components:
         - likeCount
         - saveCount
         - commentCount
+        - hackStatus
+        - communityUpvotes
+        - communityDownvotes
+        - creativeEngagementScore
         - createdAt
+
+    HackVoteBody:
+      type: object
+      properties:
+        userId:
+          type: integer
+        voteType:
+          type: string
+          enum: [up, down]
+      required:
+        - userId
+        - voteType
+
+    HackAIDimensions:
+      type: object
+      properties:
+        clarity:
+          type: number
+        originality:
+          type: number
+        practicality:
+          type: number
+        communityResonance:
+          type: number
+      required:
+        - clarity
+        - originality
+        - practicality
+        - communityResonance
+
+    HackReviewResult:
+      allOf:
+        - $ref: "#/components/schemas/VideoWithAuthor"
+        - type: object
+          properties:
+            aiResult:
+              type: object
+              properties:
+                score:
+                  type: number
+                analysis:
+                  type: string
+                dimensions:
+                  $ref: "#/components/schemas/HackAIDimensions"
+                verdict:
+                  type: string
+                  enum: [approved, challenged, rejected]
+                badge:
+                  type: string
+              required:
+                - score
+                - analysis
+                - dimensions
+                - verdict
+                - badge
 
     VideoWithAuthor:
       allOf:

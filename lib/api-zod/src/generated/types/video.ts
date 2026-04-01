@@ -5,6 +5,7 @@
  * PlatePair API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { VideoHackStatus } from "./videoHackStatus";
 
 export interface Video {
   id: number;
@@ -20,5 +21,13 @@ export interface Video {
   likeCount: number;
   saveCount: number;
   commentCount: number;
+  hackStatus: VideoHackStatus;
+  communityUpvotes: number;
+  communityDownvotes: number;
+  aiScore?: number | null;
+  aiAnalysis?: string | null;
+  aiReviewedAt?: Date | null;
+  approvedAt?: Date | null;
+  creativeEngagementScore: number;
   createdAt: Date;
 }
