@@ -41,19 +41,54 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   if (!user && location !== "/onboarding") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-purple-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full text-center">
-          <div className="text-5xl mb-4">🍳</div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">PlatePair</h1>
-          <p className="text-gray-500 text-lg mb-8">
-            The community where meals become battles, hacks become cookbooks, and every cook leaves their mark.
-          </p>
+        <div className="max-w-lg w-full">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-500 text-white mb-4 shadow-lg">
+              <span className="text-3xl">🍳</span>
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">PlatePair</h1>
+            <p className="text-gray-500 text-lg leading-relaxed">
+              The community where meals become battles,<br className="hidden sm:block" /> hacks become cookbooks, and every cook leaves their mark.
+            </p>
+          </div>
+
+          {/* Social proof tiles */}
+          <div className="grid grid-cols-3 gap-3 mb-7">
+            {[
+              { emoji: "⚔️", stat: "48", label: "Live battles" },
+              { emoji: "👨‍🍳", stat: "1,200+", label: "Community cooks" },
+              { emoji: "⭐", stat: "230+", label: "Certified judges" },
+            ].map(s => (
+              <div key={s.label} className="bg-white/80 rounded-2xl p-3 text-center border border-gray-100 shadow-sm">
+                <div className="text-xl mb-0.5">{s.emoji}</div>
+                <div className="font-bold text-gray-900 text-lg leading-none">{s.stat}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Entry paths */}
+          <div className="space-y-2 mb-6">
+            {[
+              { text: "Join a live dish battle", emoji: "🔥" },
+              { text: "Start a private cooking circle with friends", emoji: "🫂" },
+              { text: "Get your cooking hack AI-reviewed and published", emoji: "🤖" },
+            ].map(item => (
+              <div key={item.text} className="flex items-center gap-3 bg-white/70 rounded-xl px-4 py-2.5 border border-gray-100">
+                <span className="text-lg">{item.emoji}</span>
+                <span className="text-sm text-gray-700 font-medium">{item.text}</span>
+              </div>
+            ))}
+          </div>
+
           <button
             onClick={login}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-xl text-lg transition-colors"
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3.5 px-6 rounded-xl text-lg transition-colors shadow-md"
           >
-            Get Started — Log In
+            Join the Community — Log In
           </button>
-          <p className="text-xs text-gray-400 mt-4">Secure authentication · No password needed</p>
+          <p className="text-xs text-gray-400 mt-3 text-center">Secure sign-in · No password needed · Under 60 seconds to your first battle</p>
         </div>
       </div>
     );

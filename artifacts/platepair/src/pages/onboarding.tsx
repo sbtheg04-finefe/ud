@@ -2,106 +2,107 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChefHat, Building2, Star, Sparkles, Check, ArrowRight, ArrowLeft, Copy } from "lucide-react";
+import {
+  ChefHat, Building2, Star, Sparkles, Check, ArrowRight, ArrowLeft,
+  Copy, Flame, Users, BookOpen, Gavel, Briefcase, Eye, Swords,
+  Heart, Zap, Globe,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
-type Tier = "user" | "partner" | "judge";
+type Intent =
+  | "join_challenge"
+  | "start_circle"
+  | "explore"
+  | "judge"
+  | "partner"
+  | "watch";
 
-interface TierCard {
-  id: Tier[];
-  title: string;
-  subtitle: string;
+type CookLevel = "beginner" | "home" | "advanced" | "pro";
+
+interface IntentOption {
+  id: Intent;
+  label: string;
+  tagline: string;
   icon: React.ReactNode;
   color: string;
   bg: string;
   border: string;
-  perks: string[];
-  incentive?: string;
+  roleHint?: "judge" | "partner";
 }
 
-const TIERS: TierCard[] = [
+const INTENTS: IntentOption[] = [
   {
-    id: ["user"],
-    title: "Just Cook",
-    subtitle: "Community member",
-    icon: <ChefHat className="w-8 h-8" />,
+    id: "join_challenge",
+    label: "Join a Challenge",
+    tagline: "Compete in a live dish battle",
+    icon: <Swords className="w-6 h-6" />,
     color: "text-orange-600",
     bg: "bg-orange-50",
     border: "border-orange-200",
-    perks: [
-      "Share meals & cooking hacks",
-      "Join & vote on community battles",
-      "Build your Cook's Portfolio",
-      "Follow cooks in your circles",
-    ],
   },
   {
-    id: ["user", "partner"],
-    title: "Bring Your Brand",
-    subtitle: "Community member + brand partner",
-    icon: <Building2 className="w-8 h-8" />,
+    id: "start_circle",
+    label: "Start a Circle",
+    tagline: "Create your own cooking group",
+    icon: <Users className="w-6 h-6" />,
     color: "text-blue-600",
     bg: "bg-blue-50",
     border: "border-blue-200",
-    perks: [
-      "Everything in Just Cook",
-      "Sponsor battles with your brand",
-      "Prize tags on your sponsored battles",
-      "Brand visibility in battle results",
-      "Partner analytics dashboard",
-    ],
-    incentive: "Sponsored battles get 2.5x more participants on average",
   },
   {
-    id: ["user", "judge"],
-    title: "Become a Judge",
-    subtitle: "Community member + certified judge",
-    icon: <Star className="w-8 h-8" />,
+    id: "explore",
+    label: "Explore Meal Ideas",
+    tagline: "Discover recipes and hacks from the community",
+    icon: <BookOpen className="w-6 h-6" />,
+    color: "text-green-600",
+    bg: "bg-green-50",
+    border: "border-green-200",
+  },
+  {
+    id: "judge",
+    label: "Judge Entries",
+    tagline: "Score dishes and earn community authority",
+    icon: <Gavel className="w-6 h-6" />,
     color: "text-purple-600",
     bg: "bg-purple-50",
     border: "border-purple-200",
-    perks: [
-      "Everything in Just Cook",
-      "Judge battle entries",
-      "Validate community cooking hacks",
-      "Build your Judge Authority Score",
-      "Earn 'Certified Judge' badges",
-    ],
-    incentive: "Battles with judges rank 3x higher in the community feed",
+    roleHint: "judge",
   },
   {
-    id: ["user", "partner", "judge"],
-    title: "Full Package",
-    subtitle: "Cook · Brand · Judge",
-    icon: <Sparkles className="w-8 h-8" />,
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
-    perks: [
-      "Everything from all tiers",
-      "Sponsor battles AND judge them",
-      "Maximum community authority",
-      "Category expert status",
-      "Priority in battle matchmaking",
-    ],
-    incentive: "Full-package members generate 5x more community engagement",
+    id: "partner",
+    label: "Partner / Sponsor",
+    tagline: "Back a challenge with your brand or business",
+    icon: <Briefcase className="w-6 h-6" />,
+    color: "text-indigo-600",
+    bg: "bg-indigo-50",
+    border: "border-indigo-200",
+    roleHint: "partner",
+  },
+  {
+    id: "watch",
+    label: "Watch & Save",
+    tagline: "Just browsing for now — no pressure",
+    icon: <Eye className="w-6 h-6" />,
+    color: "text-gray-600",
+    bg: "bg-gray-50",
+    border: "border-gray-200",
   },
 ];
 
-const COOKING_INTERESTS = [
-  "Asian Cuisine", "Italian", "Mexican", "Baking", "Grilling",
-  "Plant-Based", "Fermentation", "Pastry", "Street Food", "Fine Dining",
-  "Budget Cooking", "Meal Prep", "Quick Meals", "World Cuisine",
+const COOK_LEVELS: { id: CookLevel; label: string; desc: string; emoji: string }[] = [
+  { id: "beginner", label: "Just Getting Started", desc: "Learning the basics", emoji: "🌱" },
+  { id: "home", label: "Home Cook", desc: "Comfortable in the kitchen", emoji: "🍳" },
+  { id: "advanced", label: "Advanced Cook", desc: "Experimenting with techniques", emoji: "🔪" },
+  { id: "pro", label: "Professional", desc: "Chef / food industry background", emoji: "👨‍🍳" },
 ];
 
-const JUDGE_SPECIALTIES = [
-  "Technique", "Flavor", "Presentation", "Innovation",
-  "Budget", "Speed", "Cultural Authenticity",
+const CUISINE_TAGS = [
+  "Asian", "Italian", "Mexican", "Baking", "Grilling",
+  "Plant-Based", "Street Food", "Fine Dining", "Budget Meals",
+  "Quick & Easy", "World Cuisine", "Fermentation",
 ];
 
 const PARTNER_CATEGORIES = [
@@ -109,21 +110,32 @@ const PARTNER_CATEGORIES = [
   "Meal Kits", "Food Tech", "Hospitality", "Health & Nutrition",
 ];
 
+const JUDGE_SPECIALTIES = [
+  "Technique", "Flavor", "Presentation", "Innovation",
+  "Budget", "Speed", "Cultural Authenticity",
+];
+
+const TOTAL_STEPS = 5;
+
 export default function Onboarding() {
   const [, setLocation] = useLocation();
   const { user: authUser } = useAuth();
   const { toast } = useToast();
 
   const [step, setStep] = useState(0);
-  const [selectedTier, setSelectedTier] = useState<TierCard | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [intent, setIntent] = useState<Intent | null>(null);
+  const [cookLevel, setCookLevel] = useState<CookLevel | null>(null);
+  const [cuisines, setCuisines] = useState<string[]>([]);
+
   const [profile, setProfile] = useState({
-    displayName: authUser?.firstName ? `${authUser.firstName} ${authUser.lastName ?? ""}`.trim() : "",
+    displayName: authUser?.firstName
+      ? `${authUser.firstName} ${authUser.lastName ?? ""}`.trim()
+      : "",
     username: "",
-    bio: "",
-    interests: [] as string[],
     referralCode: "",
+    circleName: "",
   });
 
   const [partnerData, setPartnerData] = useState({
@@ -137,25 +149,24 @@ export default function Onboarding() {
     credentials: "",
     specialties: [] as string[],
     yearsExperience: 0,
-    bio: "",
   });
 
-  const roles = selectedTier?.id ?? ["user"];
-  const isPartner = roles.includes("partner");
-  const isJudge = roles.includes("judge");
-  const totalSteps = isPartner || isJudge ? 4 : 3;
+  const selectedIntent = INTENTS.find(i => i.id === intent);
+  const wantsJudge = intent === "judge";
+  const wantsPartner = intent === "partner";
 
-  function toggleInterest(item: string) {
-    setProfile(p => ({
-      ...p,
-      interests: p.interests.includes(item)
-        ? p.interests.filter(i => i !== item)
-        : [...p.interests, item],
-    }));
+  const roles: string[] = ["user"];
+  if (wantsJudge) roles.push("judge");
+  if (wantsPartner) roles.push("partner");
+
+  function toggleCuisine(c: string) {
+    setCuisines(prev =>
+      prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]
+    );
   }
 
   function toggleSpecialty(item: string) {
-    const key = item.toLowerCase().replace(/ /g, "_") as string;
+    const key = item.toLowerCase().replace(/ /g, "_");
     setJudgeData(p => ({
       ...p,
       specialties: p.specialties.includes(key)
@@ -171,11 +182,11 @@ export default function Onboarding() {
         roles,
         displayName: profile.displayName || authUser?.firstName || "Cook",
         username: profile.username || undefined,
-        bio: profile.bio || undefined,
+        bio: cookLevel ? `Cooking level: ${cookLevel}` : undefined,
         referralCode: profile.referralCode || undefined,
       };
 
-      if (isPartner) {
+      if (wantsPartner && partnerData.brandName) {
         body.partnerProfile = {
           brandName: partnerData.brandName,
           brandCategory: partnerData.brandCategory,
@@ -184,12 +195,11 @@ export default function Onboarding() {
         };
       }
 
-      if (isJudge) {
+      if (wantsJudge) {
         body.judgeProfile = {
           credentials: judgeData.credentials || undefined,
           specialties: judgeData.specialties,
           yearsExperience: judgeData.yearsExperience,
-          bio: judgeData.bio || undefined,
         };
       }
 
@@ -202,168 +212,174 @@ export default function Onboarding() {
 
       if (!res.ok) throw new Error("Onboarding failed");
 
-      window.location.href = isPartner ? "/partner/dashboard" : isJudge ? "/judge/queue" : "/";
+      window.location.href =
+        wantsPartner ? "/partner/dashboard" :
+        wantsJudge ? "/judge/queue" :
+        intent === "join_challenge" ? "/battles" :
+        intent === "start_circle" ? "/groups" :
+        "/";
     } catch {
       toast({ title: "Something went wrong", description: "Please try again.", variant: "destructive" });
       setIsSubmitting(false);
     }
   }
 
+  const progressPercent = Math.round((step / (TOTAL_STEPS - 1)) * 100);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-purple-50 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-3xl">
-        {/* Progress */}
-        <div className="flex items-center gap-2 mb-8">
-          {Array.from({ length: totalSteps }).map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                i <= step ? "bg-orange-500" : "bg-gray-200"
-              }`}
-            />
-          ))}
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-purple-50 flex flex-col items-center justify-start pt-8 pb-24 px-4">
+      <div className="w-full max-w-2xl">
+
+        {/* Logo + Progress */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 text-white shrink-0">
+            <ChefHat size={20} />
+          </div>
+          <div className="flex-1">
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-orange-500 rounded-full"
+                animate={{ width: `${progressPercent}%` }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Step {step + 1} of {TOTAL_STEPS}</p>
+          </div>
         </div>
 
         <AnimatePresence mode="wait">
-          {/* STEP 0: Tier Selection */}
+
+          {/* ── STEP 0: INTENT ─────────────────────────────── */}
           {step === 0 && (
             <motion.div
-              key="step-0"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              key="step-intent"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
             >
-              <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Welcome to PlatePair
-                  {authUser?.firstName ? `, ${authUser.firstName}` : ""}!
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                  Hey{authUser?.firstName ? `, ${authUser.firstName}` : ""}! What are you here to do?
                 </h1>
-                <p className="text-gray-500 text-lg">
-                  What brings you here? Pick your path — you can always expand it later.
+                <p className="text-gray-500">
+                  Pick one — you can do everything else too, we just want to get you started fast.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                {TIERS.map((tier) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                {INTENTS.map((opt) => (
                   <button
-                    key={tier.title}
-                    onClick={() => setSelectedTier(tier)}
-                    className={`text-left p-5 rounded-2xl border-2 transition-all duration-200 ${tier.bg} ${
-                      selectedTier?.title === tier.title
-                        ? `${tier.border} shadow-lg scale-[1.02]`
-                        : "border-transparent hover:border-gray-200"
+                    key={opt.id}
+                    onClick={() => setIntent(opt.id)}
+                    className={`text-left p-4 rounded-2xl border-2 transition-all duration-150 group ${
+                      intent === opt.id
+                        ? `${opt.bg} ${opt.border} shadow-md`
+                        : "bg-white border-gray-100 hover:border-gray-200"
                     }`}
                   >
-                    <div className={`mb-3 ${tier.color}`}>{tier.icon}</div>
-                    <div className="font-bold text-gray-900 text-lg mb-0.5">{tier.title}</div>
-                    <div className="text-sm text-gray-500 mb-3">{tier.subtitle}</div>
-                    <ul className="space-y-1">
-                      {tier.perks.map(p => (
-                        <li key={p} className="flex items-start gap-1.5 text-sm text-gray-700">
-                          <Check className="w-3.5 h-3.5 mt-0.5 text-green-500 shrink-0" />
-                          {p}
-                        </li>
-                      ))}
-                    </ul>
-                    {tier.incentive && (
-                      <div className={`mt-3 text-xs font-medium px-2.5 py-1.5 rounded-lg ${tier.bg} ${tier.color} border ${tier.border}`}>
-                        ✨ {tier.incentive}
+                    <div className={`mb-2 ${intent === opt.id ? opt.color : "text-gray-400 group-hover:text-gray-600"} transition-colors`}>
+                      {opt.icon}
+                    </div>
+                    <div className={`font-semibold text-sm mb-0.5 ${intent === opt.id ? "text-gray-900" : "text-gray-700"}`}>
+                      {opt.label}
+                    </div>
+                    <div className="text-xs text-gray-500">{opt.tagline}</div>
+                    {opt.roleHint && (
+                      <div className={`mt-2 inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${opt.bg} ${opt.color}`}>
+                        <Sparkles className="w-3 h-3" />
+                        {opt.roleHint === "judge" ? "Unlocks Judge role" : "Unlocks Partner role"}
                       </div>
                     )}
-                    {selectedTier?.title === tier.title && (
-                      <div className={`mt-3 flex items-center gap-1 text-sm font-semibold ${tier.color}`}>
-                        <Check className="w-4 h-4" /> Selected
+                    {intent === opt.id && (
+                      <div className={`mt-2 flex items-center gap-1 text-xs font-semibold ${opt.color}`}>
+                        <Check className="w-3.5 h-3.5" /> Selected
                       </div>
                     )}
                   </button>
                 ))}
               </div>
 
-              <div className="text-center text-sm text-gray-400 mb-6">
-                Every tier gets full access to the feed, battles, and hacks.{" "}
-                <span className="font-medium text-gray-600">Judges amplify outcomes, they don't gate them.</span>
+              <div className="flex flex-col gap-2">
+                <Button
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white h-11 rounded-xl"
+                  disabled={!intent}
+                  onClick={() => setStep(1)}
+                >
+                  Let's go <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+                <button
+                  onClick={() => { setIntent("watch"); setStep(1); }}
+                  className="text-sm text-gray-400 hover:text-gray-600 py-1"
+                >
+                  Just take me in → I'll figure it out
+                </button>
               </div>
-
-              <Button
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white h-12 text-base rounded-xl"
-                disabled={!selectedTier}
-                onClick={() => setStep(1)}
-              >
-                Continue <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
             </motion.div>
           )}
 
-          {/* STEP 1: Basic Profile */}
+          {/* ── STEP 1: PROFILE ─────────────────────────────── */}
           {step === 1 && (
             <motion.div
-              key="step-1"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              key="step-profile"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
               className="space-y-6"
             >
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-1">Your cooking identity</h2>
-                <p className="text-gray-500">Tell the community a bit about yourself.</p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label>Display Name</Label>
-                  <Input
-                    placeholder="How you appear in the community"
-                    value={profile.displayName}
-                    onChange={e => setProfile(p => ({ ...p, displayName: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Username <span className="text-gray-400 text-xs">(optional)</span></Label>
-                  <Input
-                    placeholder="@yourhandle"
-                    value={profile.username}
-                    onChange={e => setProfile(p => ({ ...p, username: e.target.value.replace(/[^a-z0-9_]/gi, "").toLowerCase() }))}
-                  />
-                </div>
+                <p className="text-gray-500">Just the basics — you can add more to your profile later.</p>
               </div>
 
               <div className="space-y-1.5">
-                <Label>Bio <span className="text-gray-400 text-xs">(optional)</span></Label>
-                <Textarea
-                  placeholder="What's your cooking story? Specialty dishes? Cooking philosophy?"
-                  value={profile.bio}
-                  onChange={e => setProfile(p => ({ ...p, bio: e.target.value }))}
-                  rows={3}
+                <Label>Display Name</Label>
+                <Input
+                  placeholder="How you appear in the community"
+                  value={profile.displayName}
+                  onChange={e => setProfile(p => ({ ...p, displayName: e.target.value }))}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label>Cooking Interests <span className="text-gray-400 text-xs">(pick any that fit)</span></Label>
-                <div className="flex flex-wrap gap-2">
-                  {COOKING_INTERESTS.map(item => (
+                <Label>How would you describe your cooking level?</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {COOK_LEVELS.map(lv => (
                     <button
-                      key={item}
-                      onClick={() => toggleInterest(item)}
-                      className={`px-3 py-1.5 rounded-full text-sm border transition-all ${
-                        profile.interests.includes(item)
-                          ? "bg-orange-500 text-white border-orange-500"
-                          : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
+                      key={lv.id}
+                      onClick={() => setCookLevel(lv.id)}
+                      className={`text-left p-3 rounded-xl border-2 transition-all ${
+                        cookLevel === lv.id
+                          ? "border-orange-400 bg-orange-50"
+                          : "border-gray-100 bg-white hover:border-gray-200"
                       }`}
                     >
-                      {item}
+                      <div className="text-xl mb-1">{lv.emoji}</div>
+                      <div className="font-medium text-sm text-gray-800">{lv.label}</div>
+                      <div className="text-xs text-gray-500">{lv.desc}</div>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <Label>Referral Code <span className="text-gray-400 text-xs">(optional — join your inviter's group)</span></Label>
-                <Input
-                  placeholder="Enter a code if someone invited you"
-                  value={profile.referralCode}
-                  onChange={e => setProfile(p => ({ ...p, referralCode: e.target.value.toUpperCase() }))}
-                  maxLength={16}
-                />
+              <div className="space-y-2">
+                <Label>
+                  What cuisines excite you? <span className="text-gray-400 text-xs">(pick any)</span>
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {CUISINE_TAGS.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => toggleCuisine(c)}
+                      className={`px-3 py-1.5 rounded-full text-sm border transition-all ${
+                        cuisines.includes(c)
+                          ? "bg-orange-500 text-white border-orange-500"
+                          : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="flex gap-3 pt-2">
@@ -372,7 +388,8 @@ export default function Onboarding() {
                 </Button>
                 <Button
                   className="flex-1 bg-orange-500 hover:bg-orange-600 text-white h-11"
-                  onClick={() => setStep(isPartner || isJudge ? 2 : 3)}
+                  disabled={!profile.displayName.trim()}
+                  onClick={() => setStep(2)}
                 >
                   Continue <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -380,23 +397,162 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {/* STEP 2: Role-specific profile */}
-          {step === 2 && (isPartner || isJudge) && (
+          {/* ── STEP 2: FIRST VALUE MOMENT ─────────────────── */}
+          {step === 2 && (
             <motion.div
-              key="step-2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
+              key="step-value"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              className="space-y-5"
             >
-              {isPartner && (
+              {/* Join Challenge */}
+              {intent === "join_challenge" && (
                 <>
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-1">Brand Details</h2>
-                    <p className="text-gray-500">Set up your partner profile to start sponsoring battles.</p>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1">Your first battle is waiting</h2>
+                    <p className="text-gray-500">Here's what's live right now — you can jump straight in after setup.</p>
+                  </div>
+                  <div className="rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 p-5 text-white">
+                    <div className="flex items-center gap-2 text-orange-100 text-xs font-medium mb-2 uppercase tracking-wider">
+                      <Flame className="w-3.5 h-3.5" /> Live Battle
+                    </div>
+                    <h3 className="text-xl font-bold mb-1">Best Comfort Bowl Challenge</h3>
+                    <p className="text-orange-100 text-sm mb-3">Make your ultimate comfort bowl — rice, noodle, grain or veggie base. Any cuisine. Judged on taste, texture, and warmth.</p>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span>🏆 48 entries</span>
+                      <span>⏱ 3 days left</span>
+                      <span>⭐ Judged</span>
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-orange-50 border border-orange-100 p-4 text-sm text-orange-700">
+                    <span className="font-medium">Ready to compete?</span> Complete setup and we'll take you straight to the Battle Arena to join this challenge.
+                  </div>
+                </>
+              )}
+
+              {/* Start Circle */}
+              {intent === "start_circle" && (
+                <>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1">Let's set up your circle</h2>
+                    <p className="text-gray-500">A circle is your private cooking group. You run it, set challenges, invite your people.</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Circle Name</Label>
+                    <Input
+                      placeholder="e.g. The Spice Squad, Sunday Brunch Crew"
+                      value={profile.circleName}
+                      onChange={e => setProfile(p => ({ ...p, circleName: e.target.value }))}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { icon: "🏡", label: "Friends & Family" },
+                      { icon: "💼", label: "Work Crew" },
+                      { icon: "🌍", label: "Open Community" },
+                    ].map(t => (
+                      <div key={t.label} className="rounded-xl border border-gray-100 bg-white p-3 text-center">
+                        <div className="text-2xl mb-1">{t.icon}</div>
+                        <div className="text-xs font-medium text-gray-700">{t.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 text-sm text-blue-700">
+                    <span className="font-medium">How it works:</span> Once you're in, you'll get a shareable invite link for your circle. Battles you host there stay private to your group unless you choose to go public.
+                  </div>
+                </>
+              )}
+
+              {/* Judge */}
+              {intent === "judge" && (
+                <>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1">Activate your Judge role</h2>
+                    <p className="text-gray-500">Judges are how PlatePair maintains quality and fairness. Battles with a judge rank 3× higher in the community feed.</p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="rounded-2xl bg-purple-50 border-2 border-purple-200 p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center text-white">
+                        <Star className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-purple-900">Judge role</div>
+                        <div className="text-sm text-purple-600">Community certified</div>
+                      </div>
+                    </div>
+                    <ul className="space-y-2 mb-4">
+                      {["Score entries across live battles", "Build your Judge Authority Score", "Earn 'Verified Judge' badge on your profile", "Get first access to high-profile battles", "Create your own judged showcases later"].map(p => (
+                        <li key={p} className="flex items-start gap-2 text-sm text-purple-800">
+                          <Check className="w-3.5 h-3.5 mt-0.5 text-purple-500 shrink-0" /> {p}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label>Your culinary background <span className="text-gray-400 text-xs">(optional)</span></Label>
+                      <Input
+                        placeholder="e.g. culinary school, home chef, food blogger, 10 years cooking"
+                        value={judgeData.credentials}
+                        onChange={e => setJudgeData(p => ({ ...p, credentials: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Judge specialties <span className="text-gray-400 text-xs">(pick what you know)</span></Label>
+                      <div className="flex flex-wrap gap-2">
+                        {JUDGE_SPECIALTIES.map(item => {
+                          const key = item.toLowerCase().replace(/ /g, "_");
+                          return (
+                            <button
+                              key={item}
+                              onClick={() => toggleSpecialty(item)}
+                              className={`px-3 py-1.5 rounded-full text-sm border transition-all ${
+                                judgeData.specialties.includes(key)
+                                  ? "bg-purple-500 text-white border-purple-500"
+                                  : "bg-white text-gray-600 border-gray-200 hover:border-purple-300"
+                              }`}
+                            >
+                              {item}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Partner */}
+              {intent === "partner" && (
+                <>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1">Set up your brand</h2>
+                    <p className="text-gray-500">Partners sponsor battles and supply prizes, ingredients, or visibility — and get analytics on every campaign.</p>
+                  </div>
+
+                  <div className="rounded-2xl bg-indigo-50 border-2 border-indigo-200 p-5 mb-2">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white">
+                        <Building2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-indigo-900">Partner role</div>
+                        <div className="text-sm text-indigo-600">Sponsored battles get 2.5× more participants</div>
+                      </div>
+                    </div>
+                    <ul className="space-y-2 mb-2">
+                      {["Brand tag on every sponsored battle card", "Prize attachment to battle results", "Partner analytics dashboard", "Create follow-on campaigns from wins", "Support local & regional activations"].map(p => (
+                        <li key={p} className="flex items-start gap-2 text-sm text-indigo-800">
+                          <Check className="w-3.5 h-3.5 mt-0.5 text-indigo-500 shrink-0" /> {p}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label>Brand Name <span className="text-red-400">*</span></Label>
                       <Input
@@ -415,11 +571,8 @@ export default function Onboarding() {
                         {PARTNER_CATEGORIES.map(c => <option key={c}>{c}</option>)}
                       </select>
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label>Billing Email <span className="text-red-400">*</span></Label>
+                      <Label>Contact Email <span className="text-red-400">*</span></Label>
                       <Input
                         type="email"
                         placeholder="billing@yourbrand.com"
@@ -436,86 +589,38 @@ export default function Onboarding() {
                       />
                     </div>
                   </div>
-
-                  <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 text-sm text-blue-700">
-                    <p className="font-medium mb-1">What happens next</p>
-                    <p>After onboarding, you'll land on your Partner Dashboard where you can browse live battles and choose which ones to sponsor. Your brand gets tagged on battle cards and winners' posts.</p>
-                  </div>
                 </>
               )}
 
-              {isJudge && !isPartner && (
+              {/* Explore / Watch */}
+              {(intent === "explore" || intent === "watch") && (
                 <>
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-1">Judge Profile</h2>
-                    <p className="text-gray-500">Tell us about your culinary expertise so we can match you with the right battles.</p>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                      {intent === "explore" ? "Here's what's trending" : "Take a look around"}
+                    </h2>
+                    <p className="text-gray-500">No pressure. Explore at your own pace — everything's available from day one.</p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label>Culinary Credentials <span className="text-gray-400 text-xs">(optional)</span></Label>
-                      <Input
-                        placeholder="e.g. Culinary school, professional chef"
-                        value={judgeData.credentials}
-                        onChange={e => setJudgeData(p => ({ ...p, credentials: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Years of Experience</Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={50}
-                        value={judgeData.yearsExperience}
-                        onChange={e => setJudgeData(p => ({ ...p, yearsExperience: parseInt(e.target.value) || 0 }))}
-                      />
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {[
+                      { icon: <Flame className="w-5 h-5" />, label: "Live Battles", desc: "48 active right now", color: "text-orange-600", bg: "bg-orange-50" },
+                      { icon: <Heart className="w-5 h-5" />, label: "Community Feed", desc: "1,200+ meal posts", color: "text-red-500", bg: "bg-red-50" },
+                      { icon: <Zap className="w-5 h-5" />, label: "Cooking Hacks", desc: "AI-reviewed tips", color: "text-yellow-600", bg: "bg-yellow-50" },
+                    ].map(card => (
+                      <div key={card.label} className={`rounded-2xl ${card.bg} p-4`}>
+                        <div className={`${card.color} mb-2`}>{card.icon}</div>
+                        <div className="font-semibold text-sm text-gray-800">{card.label}</div>
+                        <div className="text-xs text-gray-500">{card.desc}</div>
+                      </div>
+                    ))}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Judging Specialties <span className="text-gray-400 text-xs">(pick what you know best)</span></Label>
-                    <div className="flex flex-wrap gap-2">
-                      {JUDGE_SPECIALTIES.map(item => {
-                        const key = item.toLowerCase().replace(/ /g, "_");
-                        return (
-                          <button
-                            key={item}
-                            onClick={() => toggleSpecialty(item)}
-                            className={`px-3 py-1.5 rounded-full text-sm border transition-all ${
-                              judgeData.specialties.includes(key)
-                                ? "bg-purple-500 text-white border-purple-500"
-                                : "bg-white text-gray-600 border-gray-200 hover:border-purple-300"
-                            }`}
-                          >
-                            {item}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label>Judge Bio <span className="text-gray-400 text-xs">(optional)</span></Label>
-                    <Textarea
-                      placeholder="What makes you a great judge? Your approach to evaluation?"
-                      value={judgeData.bio}
-                      onChange={e => setJudgeData(p => ({ ...p, bio: e.target.value }))}
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="rounded-xl bg-purple-50 border border-purple-100 p-4 text-sm text-purple-700">
-                    <p className="font-medium mb-1">Your judge group</p>
-                    <p>You'll be added to the PlatePair Judges Circle — a group of verified judges who get first access to battles needing evaluation. You also get a permanent profile as a community authority.</p>
+                  <div className="rounded-xl bg-gray-50 border border-gray-100 p-4 text-sm text-gray-600">
+                    <p className="font-medium text-gray-700 mb-1">You can always upgrade later</p>
+                    <p>When you're ready to compete, judge, or bring your brand — just tap your profile and expand your role. No forms to redo.</p>
                   </div>
                 </>
-              )}
-
-              {isPartner && isJudge && (
-                <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4 text-sm text-emerald-700">
-                  <p className="font-medium mb-1">Full Package member</p>
-                  <p>You've set up your brand details. Your judge profile will be created with default settings — you can customize it from your Partner Dashboard after onboarding.</p>
-                </div>
               )}
 
               <div className="flex gap-3 pt-2">
@@ -524,7 +629,9 @@ export default function Onboarding() {
                 </Button>
                 <Button
                   className="flex-1 bg-orange-500 hover:bg-orange-600 text-white h-11"
-                  disabled={isPartner && !partnerData.brandName}
+                  disabled={
+                    (intent === "partner" && (!partnerData.brandName.trim() || !partnerData.billingEmail.trim()))
+                  }
                   onClick={() => setStep(3)}
                 >
                   Continue <ArrowRight className="w-4 h-4 ml-1" />
@@ -533,10 +640,102 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {/* STEP 3: Welcome + What's Unlocked */}
+          {/* ── STEP 3: INVITE MOMENT ──────────────────────── */}
           {step === 3 && (
             <motion.div
-              key="step-3"
+              key="step-invite"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              className="space-y-5"
+            >
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">Bring your people in</h2>
+                <p className="text-gray-500">
+                  {intent === "start_circle"
+                    ? "Circles are more fun with 3+ people — here's your invite link the moment you're set up."
+                    : "Know someone who should join? This is the moment to invite them."}
+                </p>
+              </div>
+
+              {/* "Who invited you?" */}
+              <div className="rounded-2xl border-2 border-dashed border-gray-200 p-4 space-y-3">
+                <p className="text-sm font-medium text-gray-700">Did someone invite you?</p>
+                <Input
+                  placeholder="Paste their referral code (optional)"
+                  value={profile.referralCode}
+                  onChange={e => setProfile(p => ({ ...p, referralCode: e.target.value.toUpperCase().trim() }))}
+                  maxLength={16}
+                  className="font-mono tracking-widest uppercase"
+                />
+                <p className="text-xs text-gray-400">Entering a code connects you to their circle automatically.</p>
+              </div>
+
+              {/* Who to invite */}
+              <div className="rounded-2xl bg-white border border-gray-100 p-5 space-y-3">
+                <p className="text-sm font-semibold text-gray-800">Who should be in your PlatePair network?</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { icon: "🍽️", label: "A foodie friend", desc: "to compete with you" },
+                    { icon: "⭐", label: "Someone who judges fairly", desc: "to score your dishes" },
+                    { icon: "🏢", label: "A local business", desc: "to sponsor your battles" },
+                    { icon: "👨‍👩‍👧", label: "Your household / family", desc: "private circle" },
+                  ].map(card => (
+                    <div key={card.label} className="rounded-xl bg-gray-50 p-3">
+                      <div className="text-lg mb-1">{card.icon}</div>
+                      <div className="text-xs font-medium text-gray-800">{card.label}</div>
+                      <div className="text-xs text-gray-500">{card.desc}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-xl bg-orange-50 border border-orange-100 p-3 text-xs text-orange-700">
+                  <Globe className="w-3.5 h-3.5 inline mr-1" />
+                  Your personal invite link will be ready once you complete setup — you'll see it on your welcome screen.
+                </div>
+              </div>
+
+              {/* Soft role upgrade cards — only for basic users */}
+              {!wantsJudge && !wantsPartner && (
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Want to expand your impact?</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-xl border border-purple-100 bg-purple-50 p-3">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Star className="w-4 h-4 text-purple-600" />
+                        <span className="text-xs font-semibold text-purple-700">Add Judge role</span>
+                      </div>
+                      <p className="text-xs text-purple-600">Your battles rank 3× higher in the feed. No mandatory judging — just increases prestige.</p>
+                    </div>
+                    <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-3">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Building2 className="w-4 h-4 text-indigo-600" />
+                        <span className="text-xs font-semibold text-indigo-700">Add Partner role</span>
+                      </div>
+                      <p className="text-xs text-indigo-600">Bring a brand in. Sponsored challenges get 2.5× more entries on average.</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-center text-gray-400">You can activate these any time from your profile — no forms to redo.</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <Button variant="outline" onClick={() => setStep(2)} className="flex-1 h-11">
+                  <ArrowLeft className="w-4 h-4 mr-1" /> Back
+                </Button>
+                <Button
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white h-11"
+                  onClick={() => setStep(4)}
+                >
+                  Almost there <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── STEP 4: WELCOME ─────────────────────────────── */}
+          {step === 4 && (
+            <motion.div
+              key="step-welcome"
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
@@ -544,22 +743,31 @@ export default function Onboarding() {
             >
               <div className="text-6xl mb-4">🎉</div>
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                You're all set, {profile.displayName || authUser?.firstName || "Chef"}!
+                You're in, {profile.displayName || authUser?.firstName || "Chef"}!
               </h2>
-              <p className="text-gray-500 mb-8 text-lg">
-                Here's what you've unlocked with your{" "}
-                <span className="font-semibold text-orange-600">{selectedTier?.title}</span> account.
+              <p className="text-gray-500 mb-6 text-base">
+                {intent === "join_challenge" && "Head to the Battle Arena — your first battle is waiting."}
+                {intent === "start_circle" && "Your circle is ready to launch. Invite your people and set your first challenge."}
+                {intent === "judge" && "Your Judge profile is live. The queue is already showing battles that need you."}
+                {intent === "partner" && "Your brand is set up. Browse live battles and sponsor your first one."}
+                {(intent === "explore" || intent === "watch") && "The whole community is open to you. Explore, save, and jump in whenever you're ready."}
               </p>
 
-              <div className={`rounded-2xl border-2 p-6 mb-6 text-left ${selectedTier?.bg} ${selectedTier?.border}`}>
-                <div className={`flex items-center gap-2 font-bold text-lg mb-4 ${selectedTier?.color}`}>
-                  {selectedTier?.icon} {selectedTier?.title}
-                </div>
+              {/* What's unlocked */}
+              <div className="rounded-2xl border border-gray-100 bg-white p-5 mb-5 text-left">
+                <p className="text-sm font-semibold text-gray-700 mb-3">What you've unlocked:</p>
                 <ul className="space-y-2">
-                  {selectedTier?.perks.map(p => (
-                    <li key={p} className="flex items-center gap-2 text-gray-800">
-                      <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
-                        <Check className="w-3 h-3 text-green-600" />
+                  {[
+                    "Full access to the community feed, groups, and hacks",
+                    "Submit meals and enter any open battle",
+                    "Save dishes to your personal collection",
+                    ...(wantsJudge ? ["Judge battles and build your Authority Score", "Verified Judge badge on your profile"] : []),
+                    ...(wantsPartner ? ["Sponsor battles as " + (partnerData.brandName || "your brand"), "Partner analytics dashboard", "Brand tag on sponsored battle cards"] : []),
+                    intent === "start_circle" ? (profile.circleName ? `Launch "${profile.circleName}" and invite your crew` : "Start your private circle") : null,
+                  ].filter(Boolean).map(p => (
+                    <li key={p as string} className="flex items-start gap-2 text-sm text-gray-700">
+                      <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <Check className="w-2.5 h-2.5 text-green-600" />
                       </div>
                       {p}
                     </li>
@@ -567,27 +775,27 @@ export default function Onboarding() {
                 </ul>
               </div>
 
+              {/* Referral code */}
               {authUser?.referralCode && (
-                <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 mb-6 text-left">
-                  <p className="text-sm font-medium text-gray-700 mb-2">
-                    Your referral code — share it to grow your network:
-                  </p>
+                <div className="rounded-xl bg-orange-50 border border-orange-100 p-4 mb-5 text-left">
+                  <p className="text-xs font-semibold text-orange-700 uppercase tracking-wider mb-2">Your invite code — share to grow your circle</p>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-white border border-gray-200 rounded-lg px-4 py-2 text-lg font-mono font-bold text-orange-600 tracking-widest">
+                    <code className="flex-1 bg-white border border-orange-200 rounded-lg px-4 py-2 text-lg font-mono font-bold text-orange-600 tracking-widest">
                       {authUser.referralCode}
                     </code>
                     <Button
                       size="sm"
                       variant="outline"
+                      className="border-orange-200 text-orange-600 hover:bg-orange-50"
                       onClick={() => {
-                        navigator.clipboard.writeText(authUser.referralCode ?? "");
-                        toast({ title: "Copied!", description: "Referral code copied to clipboard." });
+                        navigator.clipboard.writeText(authUser?.referralCode ?? "");
+                        toast({ title: "Copied!", description: "Share it with anyone — they'll land in your circle." });
                       }}
                     >
                       <Copy className="w-4 h-4" />
                     </Button>
                   </div>
-                  <p className="text-xs text-gray-400 mt-2">
+                  <p className="text-xs text-orange-500 mt-2">
                     Anyone who signs up with your code automatically joins your cooking circle.
                   </p>
                 </div>
@@ -598,23 +806,24 @@ export default function Onboarding() {
                 disabled={isSubmitting}
                 onClick={handleComplete}
               >
-                {isSubmitting ? "Setting up your account..." : (
-                  isPartner ? "Go to Partner Dashboard →" :
-                  isJudge ? "Go to Judge Queue →" :
-                  "Start Cooking →"
+                {isSubmitting ? "Setting things up…" : (
+                  intent === "join_challenge" ? "Go to Battle Arena →" :
+                  intent === "start_circle" ? "Launch My Circle →" :
+                  intent === "judge" ? "Open Judge Queue →" :
+                  intent === "partner" ? "Go to Partner Dashboard →" :
+                  "Start Exploring →"
                 )}
               </Button>
 
-              {(isPartner || isJudge) && (
-                <button
-                  onClick={() => { handleComplete(); }}
-                  className="mt-3 text-sm text-gray-400 hover:text-gray-600 underline"
-                >
-                  Skip to main feed instead
-                </button>
-              )}
+              <button
+                onClick={handleComplete}
+                className="mt-3 text-sm text-gray-400 hover:text-gray-600"
+              >
+                Take me to the main feed instead
+              </button>
             </motion.div>
           )}
+
         </AnimatePresence>
       </div>
     </div>
