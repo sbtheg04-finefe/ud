@@ -6,3 +6,9 @@ id = "vnveUEJICmEL7z3oFgP_E"
 uri = "file://PLATEPAIR_BRIEF.md"
 type = "text"
 title = "PlatePair — Project Brief for New Collaborator"
+
+[[outputs]]
+id = "F44c3MWaz6BConjpTpWpA"
+uri = "file://PLATEPAIR_BRIEF.docx"
+type = "word_document"
+title = "PlatePair — Project Brief (.docx)"

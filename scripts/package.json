@@ -8,10 +8,12 @@
     "seed": "tsx ./src/seed.ts",
     "seed-battles": "tsx ./src/seed-battles.ts",
     "seed-hack-approvals": "tsx ./src/seed-hack-approvals.ts",
+    "export-brief": "tsx ./src/export-brief-docx.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@workspace/db": "workspace:*"
+    "@workspace/db": "workspace:*",
+    "docx": "^9.6.1"
   },
   "devDependencies": {
     "@types/node": "catalog:",
