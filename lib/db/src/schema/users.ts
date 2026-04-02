@@ -17,6 +17,7 @@ export const usersTable = pgTable("users", {
   role: userRoleEnum("role").notNull().default("user"),
 
   replitUserId: varchar("replit_user_id").unique(),
+  passwordHash: text("password_hash"),
   roles: text("roles").array().notNull().default(["user"]),
   referralCode: varchar("referral_code", { length: 16 }).unique(),
   referredById: integer("referred_by_id"),

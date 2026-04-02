@@ -10,12 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, Video, Bookmark, PlusCircle, ChefHat, Swords, Building2, Star, LogOut } from "lucide-react";
+import { Home, Users, Video, Bookmark, PlusCircle, ChefHat, Swords, Building2, Star, LogOut, UserCircle2 } from "lucide-react";
 
 export function Navbar() {
   const [location] = useLocation();
   const { data: user, isPartner, isJudge } = useCurrentUser();
-  const { logout } = useAuth();
+  const { logout, isAuthenticated, isLoading } = useAuth();
 
   const navItems = [
     { href: "/", label: "Feed", icon: Home },
@@ -78,12 +78,23 @@ export function Navbar() {
             </Link>
           )}
 
-          <Link href="/create" data-testid="link-create">
-            <Button className="rounded-full shadow-md gap-2" size="sm">
-              <PlusCircle size={18} />
-              <span className="hidden sm:inline">Share</span>
-            </Button>
-          </Link>
+          {isAuthenticated && (
+            <Link href="/create" data-testid="link-create">
+              <Button className="rounded-full shadow-md gap-2" size="sm">
+                <PlusCircle size={18} />
+                <span className="hidden sm:inline">Share</span>
+              </Button>
+            </Link>
+          )}
+
+          {!isLoading && !isAuthenticated && (
+            <Link href="/login">
+              <Button variant="outline" size="sm" className="rounded-full gap-2 border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-400">
+                <UserCircle2 size={16} />
+                <span>Sign In</span>
+              </Button>
+            </Link>
+          )}
 
           {user && (
             <DropdownMenu>

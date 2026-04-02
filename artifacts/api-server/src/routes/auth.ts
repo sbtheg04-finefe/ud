@@ -4,6 +4,7 @@ import { GetCurrentAuthUserResponse } from "@workspace/api-zod";
 import { db, usersTable, sessionsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 import {
   clearSession,
   getOidcConfig,
@@ -214,15 +215,119 @@ router.get("/callback", async (req: Request, res: Response) => {
 });
 
 router.get("/logout", async (req: Request, res: Response) => {
-  const config = await getOidcConfig();
-  const origin = getOrigin(req);
   const sid = getSessionId(req);
-  await clearSession(res, sid);
-  const endSessionUrl = oidc.buildEndSessionUrl(config, {
-    client_id: process.env.REPL_ID!,
-    post_logout_redirect_uri: origin,
-  });
-  res.redirect(endSessionUrl.href);
+  if (sid) await clearSession(res, sid);
+  // If they used Replit OIDC, also end that session
+  try {
+    const config = await getOidcConfig();
+    const origin = getOrigin(req);
+    const endSessionUrl = oidc.buildEndSessionUrl(config, {
+      client_id: process.env.REPL_ID!,
+      post_logout_redirect_uri: origin,
+    });
+    res.redirect(endSessionUrl.href);
+  } catch {
+    res.redirect("/");
+  }
+});
+
+function buildSessionUser(u: typeof usersTable.$inferSelect) {
+  return {
+    id: u.id,
+    replitId: u.replitUserId ?? "",
+    email: u.email,
+    firstName: u.displayName.split(" ")[0] ?? null,
+    lastName: u.displayName.split(" ").slice(1).join(" ") || null,
+    profileImageUrl: u.avatarUrl ?? null,
+    displayName: u.displayName,
+    username: u.username,
+    roles: u.roles as string[],
+    onboardingCompleted: u.onboardingCompleted,
+    referralCode: u.referralCode ?? null,
+  };
+}
+
+router.post("/auth/register", async (req: Request, res: Response) => {
+  const { email, password, displayName, referralCode } = req.body;
+
+  if (!email || !password || !displayName) {
+    res.status(400).json({ error: "email, password, and displayName are required" });
+    return;
+  }
+  if (password.length < 6) {
+    res.status(400).json({ error: "Password must be at least 6 characters" });
+    return;
+  }
+
+  const [existing] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, email.toLowerCase().trim()));
+  if (existing) {
+    res.status(409).json({ error: "An account with that email already exists" });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  const username = await generateUniqueUsername(displayName);
+  const refCode = generateReferralCode();
+
+  let referredById: number | undefined;
+  if (referralCode) {
+    const [referrer] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.referralCode, referralCode.toUpperCase()));
+    if (referrer) referredById = referrer.id;
+  }
+
+  const [newUser] = await db.insert(usersTable).values({
+    displayName: displayName.trim(),
+    username,
+    email: email.toLowerCase().trim(),
+    passwordHash,
+    roles: ["user"],
+    referralCode: refCode,
+    referredById: referredById ?? null,
+    onboardingCompleted: false,
+  }).returning();
+
+  const sessionData: SessionData = {
+    user: buildSessionUser(newUser),
+    access_token: "",
+    refresh_token: undefined,
+    expires_at: undefined,
+  };
+
+  const sid = await createSession(sessionData);
+  setSessionCookie(res, sid);
+  res.status(201).json({ user: buildSessionUser(newUser) });
+});
+
+router.post("/auth/login", async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    res.status(400).json({ error: "email and password are required" });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email.toLowerCase().trim()));
+  if (!user || !user.passwordHash) {
+    res.status(401).json({ error: "Invalid email or password" });
+    return;
+  }
+
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) {
+    res.status(401).json({ error: "Invalid email or password" });
+    return;
+  }
+
+  const sessionData: SessionData = {
+    user: buildSessionUser(user),
+    access_token: "",
+    refresh_token: undefined,
+    expires_at: undefined,
+  };
+
+  const sid = await createSession(sessionData);
+  setSessionCookie(res, sid);
+  res.json({ user: buildSessionUser(user) });
 });
 
 export default router;

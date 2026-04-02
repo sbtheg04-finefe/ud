@@ -20,14 +20,19 @@ interface AuthState {
   isAuthenticated: boolean;
   login: () => void;
   logout: () => void;
+  register: (email: string, password: string, displayName: string, referralCode?: string) => Promise<{ error?: string }>;
+  emailLogin: (email: string, password: string) => Promise<{ error?: string }>;
+  refreshUser: () => void;
 }
 
 export function useAuth(): AuthState {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    setIsLoading(true);
     fetch("/api/auth/user", { credentials: "include" })
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -46,7 +51,9 @@ export function useAuth(): AuthState {
         }
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [refreshTick]);
+
+  const refreshUser = useCallback(() => setRefreshTick(t => t + 1), []);
 
   const login = useCallback(() => {
     const base = (import.meta.env.BASE_URL ?? "/").replace(/\/+$/, "") || "/";
@@ -57,5 +64,39 @@ export function useAuth(): AuthState {
     window.location.href = "/api/logout";
   }, []);
 
-  return { user, isLoading, isAuthenticated: !!user, login, logout };
+  const register = useCallback(async (email: string, password: string, displayName: string, referralCode?: string) => {
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password, displayName, referralCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) return { error: data.error ?? "Registration failed" };
+      setUser(data.user);
+      return {};
+    } catch {
+      return { error: "Network error. Please try again." };
+    }
+  }, []);
+
+  const emailLogin = useCallback(async (email: string, password: string) => {
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) return { error: data.error ?? "Login failed" };
+      setUser(data.user);
+      return {};
+    } catch {
+      return { error: "Network error. Please try again." };
+    }
+  }, []);
+
+  return { user, isLoading, isAuthenticated: !!user, login, logout, register, emailLogin, refreshUser };
 }

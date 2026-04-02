@@ -148,6 +148,16 @@ Auth + Onboarding pages: `onboarding.tsx` (4-step wizard with tier selection), `
 
 **Seed data:** 6 demo battles, entries, interest tracking (`scripts/src/seed-battles.ts`)
 
+**Custom Auth (No Replit account required):**
+- Guest mode: All public routes browsable without any login (home/feed, battles, videos, groups, meals, profiles)
+- Protected routes (require sign-in): /create, /battles/create, /saved, /partner/dashboard, /judge/queue, /profile/:id/edit
+- Custom register: `POST /api/auth/register` (email, password, displayName, optional referralCode) — bcryptjs password hashing (cost 12)
+- Custom login: `POST /api/auth/login` (email, password) — same session infrastructure as OIDC
+- Replit OIDC login: Still available as "Continue with Replit" for existing users (GET /api/login)
+- Login page: `/login` — choose flow (Create account / Sign in / Continue with Replit / Browse as guest)
+- Navbar: Shows "Sign In" button for guests, avatar dropdown for authenticated users
+- `useAuth` hook extended: `register()`, `emailLogin()`, `refreshUser()` functions added
+
 **4-Tier Onboarding System:**
 - Tiers: Just Cook (user) / Bring Your Brand (partner+user) / Become a Judge (judge+user) / Full Package (all)
 - Auth: Real Replit OIDC via `openid-client`; sessions stored in `sessions` DB table; cookie `sid`
