@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useGetFeed, useGetFeedSummary } from "@workspace/api-client-react";
+import { useGetFeed, useGetFeedSummary, getGetFeedQueryKey, getGetFeedSummaryQueryKey } from "@workspace/api-client-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { FeedItemCard } from "@/components/shared/feed-item-card";
 import { Navbar } from "@/components/layout/Navbar";
@@ -178,8 +178,8 @@ function QuickActions() {
 
 export default function Home() {
   const [filter, setFilter] = useState<"all" | "meals" | "videos">("all");
-  const { data: summary, isLoading: isLoadingSummary } = useGetFeedSummary({ query: { enabled: true } });
-  const { data: feedData, isLoading: isLoadingFeed } = useGetFeed({ query: { enabled: true } });
+  const { data: summary, isLoading: isLoadingSummary } = useGetFeedSummary(undefined, { query: { enabled: true, queryKey: getGetFeedSummaryQueryKey() } });
+  const { data: feedData, isLoading: isLoadingFeed } = useGetFeed(undefined, { query: { enabled: true, queryKey: getGetFeedQueryKey() } });
 
   const filteredFeed = feedData?.items.filter(item => {
     if (filter === "all") return true;

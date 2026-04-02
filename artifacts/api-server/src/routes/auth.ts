@@ -194,7 +194,7 @@ router.get("/callback", async (req: Request, res: Response) => {
       profileImageUrl: dbUser.avatarUrl ?? null,
       displayName: dbUser.displayName,
       username: dbUser.username,
-      roles: dbUser.roles,
+      roles: (dbUser.roles ?? []) as ("user" | "partner" | "judge")[],
       onboardingCompleted: dbUser.onboardingCompleted,
       referralCode: dbUser.referralCode ?? null,
     },
@@ -241,7 +241,7 @@ function buildSessionUser(u: typeof usersTable.$inferSelect) {
     profileImageUrl: u.avatarUrl ?? null,
     displayName: u.displayName,
     username: u.username,
-    roles: u.roles as string[],
+    roles: (u.roles ?? []) as ("user" | "partner" | "judge")[],
     onboardingCompleted: u.onboardingCompleted,
     referralCode: u.referralCode ?? null,
   };

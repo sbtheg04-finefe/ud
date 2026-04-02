@@ -4,7 +4,10 @@ import { Link } from "wouter";
 import { Building2, TrendingUp, Trophy, Users, Plus, Sparkles, ArrowRight, Star, Eye, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useListBattles, useGetPartnerProfile, useGetPartnerBattles } from "@workspace/api-client-react";
+import {
+  useListBattles, useGetPartnerProfile, useGetPartnerBattles,
+  getGetPartnerProfileQueryKey, getGetPartnerBattlesQueryKey, getListBattlesQueryKey,
+} from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function PartnerDashboard() {
@@ -15,9 +18,9 @@ export default function PartnerDashboard() {
   const [selectedBattleId, setSelectedBattleId] = useState<number | null>(null);
   const [sponsorForm, setSponsorForm] = useState({ amount: "", prize: "" });
 
-  const { data: profile } = useGetPartnerProfile({ query: { enabled: !!authUser } });
-  const { data: partnerBattles } = useGetPartnerBattles({ query: { enabled: !!authUser } });
-  const { data: allBattles } = useListBattles({ query: { enabled: true } });
+  const { data: profile } = useGetPartnerProfile({ query: { enabled: !!authUser, queryKey: getGetPartnerProfileQueryKey() } });
+  const { data: partnerBattles } = useGetPartnerBattles({ query: { enabled: !!authUser, queryKey: getGetPartnerBattlesQueryKey() } });
+  const { data: allBattles } = useListBattles({}, { query: { enabled: true, queryKey: getListBattlesQueryKey({}) } });
 
   const openBattles = (allBattles ?? []).filter(b => b.battleStatus === "open" || b.battleStatus === "live");
 

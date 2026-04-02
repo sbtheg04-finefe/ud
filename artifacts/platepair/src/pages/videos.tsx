@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useListVideos, useVoteOnHack, useSubmitHackForReview } from "@workspace/api-client-react";
+import { useListVideos, useVoteOnHack, useSubmitHackForReview, getListVideosQueryKey } from "@workspace/api-client-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Navbar } from "@/components/layout/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -330,7 +330,7 @@ export default function Videos() {
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const { data: user } = useCurrentUser();
 
-  const { data: videos, isLoading } = useListVideos({}, { query: { enabled: true } });
+  const { data: videos, isLoading } = useListVideos({}, { query: { enabled: true, queryKey: getListVideosQueryKey({}) } });
 
   const allTags = videos ? Array.from(new Set(videos.flatMap(v => v.tags))) : [];
 

@@ -110,7 +110,7 @@ router.post("/onboarding/complete", async (req, res) => {
         ...session,
         user: {
           ...session.user,
-          roles: updated.roles,
+          roles: (updated.roles ?? []) as ("user" | "partner" | "judge")[],
           onboardingCompleted: true,
           displayName: updated.displayName,
           username: updated.username,

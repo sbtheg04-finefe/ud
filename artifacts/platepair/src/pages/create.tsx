@@ -3,10 +3,11 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { 
-  useCreateMeal, 
-  useCreateVideo, 
+import {
+  useCreateMeal,
+  useCreateVideo,
   useListGroups,
+  getListGroupsQueryKey,
 } from "@workspace/api-client-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useQueryClient } from "@tanstack/react-query";
@@ -46,7 +47,7 @@ const videoSchema = z.object({
 export default function Create() {
   const [, setLocation] = useLocation();
   const { data: user } = useCurrentUser();
-  const { data: groups } = useListGroups({ query: { enabled: true } });
+  const { data: groups } = useListGroups({ query: { enabled: true, queryKey: getListGroupsQueryKey() } });
   const queryClient = useQueryClient();
   const { toast } = useToast();
   

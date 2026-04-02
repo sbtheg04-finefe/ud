@@ -3,12 +3,12 @@ import { useGetUser, getGetUserQueryKey } from "@workspace/api-client-react";
 
 export function useCurrentUser() {
   const { user: authUser, isLoading: authLoading } = useAuth();
-  const userId = authUser?.id ?? 1;
+  const userId = authUser?.id;
 
-  const userQuery = useGetUser(userId, {
+  const userQuery = useGetUser(userId!, {
     query: {
-      enabled: !authLoading,
-      queryKey: getGetUserQueryKey(userId),
+      enabled: !authLoading && !!userId,
+      queryKey: getGetUserQueryKey(userId!),
     },
   });
 

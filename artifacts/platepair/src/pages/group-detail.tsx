@@ -1,5 +1,8 @@
 import { useParams, Link } from "wouter";
-import { useGetGroup, useGetGroupStats, useListGroupMembers, useGetFeed } from "@workspace/api-client-react";
+import {
+  useGetGroup, useGetGroupStats, useListGroupMembers, useGetFeed,
+  getGetGroupQueryKey, getGetGroupStatsQueryKey, getListGroupMembersQueryKey, getGetFeedQueryKey,
+} from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FeedItemCard } from "@/components/shared/feed-item-card";
@@ -11,10 +14,11 @@ export default function GroupDetail() {
   const { groupId } = useParams();
   const id = Number(groupId);
 
-  const { data: group, isLoading: isLoadingGroup } = useGetGroup(id, { query: { enabled: !!id } });
-  const { data: stats, isLoading: isLoadingStats } = useGetGroupStats(id, { query: { enabled: !!id } });
-  const { data: members, isLoading: isLoadingMembers } = useListGroupMembers(id, { query: { enabled: !!id } });
-  const { data: feedData, isLoading: isLoadingFeed } = useGetFeed({ query: { enabled: !!id } }, { query: { groupId: id } } as any); // Workaround for params passing
+  const { data: group, isLoading: isLoadingGroup } = useGetGroup(id, { query: { enabled: !!id, queryKey: getGetGroupQueryKey(id) } });
+  const { data: stats, isLoading: isLoadingStats } = useGetGroupStats(id, { query: { enabled: !!id, queryKey: getGetGroupStatsQueryKey(id) } });
+  const { data: members, isLoading: isLoadingMembers } = useListGroupMembers(id, { query: { enabled: !!id, queryKey: getListGroupMembersQueryKey(id) } });
+  const feedParams = { groupId: id };
+  const { data: feedData, isLoading: isLoadingFeed } = useGetFeed(feedParams, { query: { enabled: !!id, queryKey: getGetFeedQueryKey(feedParams) } });
 
   return (
     <div className="min-h-screen bg-background">

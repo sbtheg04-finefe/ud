@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, integer, pgEnum, boolean, real } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, integer, pgEnum, boolean, real, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -33,6 +33,12 @@ export const battlesTable = pgTable("battles", {
   participantCount: integer("participant_count").notNull().default(0),
   entryCount: integer("entry_count").notNull().default(0),
   coverImageUrl: text("cover_image_url"),
+  sourceUrl: text("source_url"),
+  sourcePlatform: text("source_platform"),
+  sourceCreator: text("source_creator"),
+  sourceThumbnailUrl: text("source_thumbnail_url"),
+  bracketData: jsonb("bracket_data"),
+  maxParticipants: integer("max_participants").notNull().default(16),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

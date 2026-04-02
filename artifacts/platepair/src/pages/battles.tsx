@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useListBattles } from "@workspace/api-client-react";
+import { useListBattles, getListBattlesQueryKey } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -47,9 +47,12 @@ export default function Battles() {
   const [filterScope, setFilterScope] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("open");
 
+  const params = filterScope
+    ? { scopeType: filterScope as any, battleStatus: filterStatus as any }
+    : { battleStatus: filterStatus as any };
   const { data: battles, isLoading } = useListBattles(
-    filterScope ? { scopeType: filterScope as any, battleStatus: filterStatus as any } : { battleStatus: filterStatus as any },
-    { query: { enabled: true } }
+    params,
+    { query: { enabled: true, queryKey: getListBattlesQueryKey(params) } }
   );
 
   return (

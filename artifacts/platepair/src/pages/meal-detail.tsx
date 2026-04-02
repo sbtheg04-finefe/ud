@@ -36,7 +36,7 @@ export default function MealDetail() {
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
 
-  const { data: meal, isLoading } = useGetMeal(id, { query: { enabled: !!id } });
+  const { data: meal, isLoading } = useGetMeal(id, { query: { enabled: !!id, queryKey: getGetMealQueryKey(id) } });
 
   const toggleReaction = useToggleReaction({
     mutation: {

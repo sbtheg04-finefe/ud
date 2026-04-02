@@ -1,6 +1,9 @@
 import { useParams, Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
-import { useGetUser, useGetUserStats, useListMeals, useListVideos } from "@workspace/api-client-react";
+import {
+  useGetUser, useGetUserStats, useListMeals, useListVideos,
+  getGetUserQueryKey, getGetUserStatsQueryKey, getListMealsQueryKey, getListVideosQueryKey,
+} from "@workspace/api-client-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Navbar } from "@/components/layout/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,11 +20,11 @@ export default function Profile() {
   const { data: currentUser } = useCurrentUser();
   const isOwnProfile = currentUser?.id === id;
 
-  const { data: user, isLoading: isLoadingUser } = useGetUser(id, { query: { enabled: !!id } });
-  const { data: stats, isLoading: isLoadingStats } = useGetUserStats(id, { query: { enabled: !!id } });
-  
-  const { data: meals, isLoading: isLoadingMeals } = useListMeals({ authorId: id }, { query: { enabled: !!id } });
-  const { data: videos, isLoading: isLoadingVideos } = useListVideos({ authorId: id }, { query: { enabled: !!id } });
+  const { data: user, isLoading: isLoadingUser } = useGetUser(id, { query: { enabled: !!id, queryKey: getGetUserQueryKey(id) } });
+  const { data: stats, isLoading: isLoadingStats } = useGetUserStats(id, { query: { enabled: !!id, queryKey: getGetUserStatsQueryKey(id) } });
+
+  const { data: meals, isLoading: isLoadingMeals } = useListMeals({ authorId: id }, { query: { enabled: !!id, queryKey: getListMealsQueryKey({ authorId: id }) } });
+  const { data: videos, isLoading: isLoadingVideos } = useListVideos({ authorId: id }, { query: { enabled: !!id, queryKey: getListVideosQueryKey({ authorId: id }) } });
 
   return (
     <div className="min-h-screen bg-background">
@@ -121,23 +124,23 @@ export default function Profile() {
             </div>
 
             {/* Tags */}
-            {(!isLoadingUser && (user?.dietaryPreferences?.length > 0 || user?.cookingInterests?.length > 0)) && (
+            {(!isLoadingUser && ((user?.dietaryPreferences?.length ?? 0) > 0 || (user?.cookingInterests?.length ?? 0) > 0)) && (
               <div className="bg-card border rounded-2xl p-6 shadow-sm">
-                {user.dietaryPreferences?.length > 0 && (
+                {(user?.dietaryPreferences?.length ?? 0) > 0 && (
                   <div className="mb-4">
                     <h3 className="font-serif font-bold text-sm mb-2 text-muted-foreground uppercase tracking-wider">Dietary</h3>
                     <div className="flex flex-wrap gap-1.5">
-                      {user.dietaryPreferences.map(tag => (
+                      {user?.dietaryPreferences?.map(tag => (
                         <Badge key={tag} variant="outline" className="bg-secondary/10 border-secondary/20 text-secondary-foreground">{tag}</Badge>
                       ))}
                     </div>
                   </div>
                 )}
-                {user.cookingInterests?.length > 0 && (
+                {(user?.cookingInterests?.length ?? 0) > 0 && (
                   <div>
                     <h3 className="font-serif font-bold text-sm mb-2 text-muted-foreground uppercase tracking-wider">Interests</h3>
                     <div className="flex flex-wrap gap-1.5">
-                      {user.cookingInterests.map(tag => (
+                      {user?.cookingInterests?.map(tag => (
                         <Badge key={tag} variant="outline" className="bg-muted/50">{tag}</Badge>
                       ))}
                     </div>

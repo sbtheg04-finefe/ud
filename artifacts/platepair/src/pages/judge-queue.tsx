@@ -3,15 +3,18 @@ import { Link } from "wouter";
 import { Star, Check, Clock, Trophy, ChevronRight, Zap, Award, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useGetJudgeProfile, useGetJudgeAssignments } from "@workspace/api-client-react";
+import {
+  useGetJudgeProfile, useGetJudgeAssignments,
+  getGetJudgeProfileQueryKey, getGetJudgeAssignmentsQueryKey,
+} from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function JudgeQueue() {
   const { user: authUser } = useAuth();
   const { toast } = useToast();
 
-  const { data: profile } = useGetJudgeProfile({ query: { enabled: !!authUser } });
-  const { data: assignments, refetch } = useGetJudgeAssignments({ query: { enabled: !!authUser } });
+  const { data: profile } = useGetJudgeProfile({ query: { enabled: !!authUser, queryKey: getGetJudgeProfileQueryKey() } });
+  const { data: assignments, refetch } = useGetJudgeAssignments({ query: { enabled: !!authUser, queryKey: getGetJudgeAssignmentsQueryKey() } });
 
   const pending = (assignments ?? []).filter(a => !a.isAccepted && !a.completedAt);
   const active = (assignments ?? []).filter(a => a.isAccepted && !a.completedAt);

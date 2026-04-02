@@ -7,10 +7,11 @@ import {
   useJoinBattle,
   useSubmitBattleEntry,
   useTrackBattleInterest,
+  getGetBattleQueryKey,
+  getListBattleEntriesQueryKey,
 } from "@workspace/api-client-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useQueryClient } from "@tanstack/react-query";
-import { getGetBattleQueryKey, getListBattleEntriesQueryKey } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -58,8 +59,8 @@ export default function BattleDetail() {
   const [hasJoined, setHasJoined] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const { data: battle, isLoading } = useGetBattle(id, { query: { enabled: !!id } });
-  const { data: entries } = useListBattleEntries(id, { query: { enabled: !!id } });
+  const { data: battle, isLoading } = useGetBattle(id, { query: { enabled: !!id, queryKey: getGetBattleQueryKey(id) } });
+  const { data: entries } = useListBattleEntries(id, { query: { enabled: !!id, queryKey: getListBattleEntriesQueryKey(id) } });
 
   const joinMutation = useJoinBattle({
     mutation: {

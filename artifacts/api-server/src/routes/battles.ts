@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Request, type Response } from "express";
 import { db } from "@workspace/db";
 import {
   battlesTable,
@@ -12,8 +12,23 @@ import {
   groupMembershipsTable,
 } from "@workspace/db/schema";
 import { eq, and, desc, count, sql, inArray } from "drizzle-orm";
+import { extractUrl } from "../lib/url-extractor";
 
 const router = Router();
+
+router.post("/battles/extract-url", async (req: Request, res: Response) => {
+  const { url } = req.body;
+  if (!url || typeof url !== "string") {
+    res.status(400).json({ error: "url is required" });
+    return;
+  }
+  const result = await extractUrl(url.trim());
+  if (!result.ok) {
+    res.status(422).json({ error: result.error });
+    return;
+  }
+  res.json(result.data);
+});
 
 function slugify(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now();
@@ -146,6 +161,7 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   const {
     title, description, sourceType, sourceMealId, sourceVideoId,
+    sourceUrl, sourcePlatform, sourceCreator, sourceThumbnailUrl,
     challengeType = "solo_remake", scopeType = "public", groupId, createdBy,
     maxTeamSize = 4, coverImageUrl, registrationEnd, submissionDeadline,
     ingredientList = [], optionalSubstitutions = [], toolList = [],
@@ -157,13 +173,15 @@ router.post("/", async (req, res) => {
   if (sourceMealId) [meal] = await db.select().from(mealsTable).where(eq(mealsTable.id, Number(sourceMealId)));
   if (sourceVideoId) [video] = await db.select().from(videosTable).where(eq(videosTable.id, Number(sourceVideoId)));
 
-  const { score, breakdown } = computeBattleWorthiness(meal, video);
-  const coverImg = coverImageUrl || meal?.imageUrl || video?.thumbnailUrl || null;
+  const { score } = computeBattleWorthiness(meal, video);
+  const coverImg = coverImageUrl || sourceThumbnailUrl || meal?.imageUrl || video?.thumbnailUrl || null;
 
   const [battle] = await db.insert(battlesTable).values({
-    title, description, sourceType, sourceMealId: sourceMealId || null,
-    sourceVideoId: sourceVideoId || null, challengeType, scopeType,
-    groupId: groupId || null, createdBy, maxTeamSize,
+    title, description, sourceType: sourceType || (sourceUrl ? "external" : "meal"),
+    sourceMealId: sourceMealId || null, sourceVideoId: sourceVideoId || null,
+    sourceUrl: sourceUrl || null, sourcePlatform: sourcePlatform || null,
+    sourceCreator: sourceCreator || null, sourceThumbnailUrl: sourceThumbnailUrl || null,
+    challengeType, scopeType, groupId: groupId || null, createdBy, maxTeamSize,
     coverImageUrl: coverImg, battleWorthinessScore: score,
     slug: slugify(title),
     registrationStart: new Date(),
@@ -295,7 +313,10 @@ router.post("/from-content", async (req, res) => {
 
 router.get("/:battleId", async (req, res) => {
   const [battle] = await db.select().from(battlesTable).where(eq(battlesTable.id, Number(req.params.battleId)));
-  if (!battle) return res.status(404).json({ error: "Battle not found" });
+  if (!battle) {
+    res.status(404).json({ error: "Battle not found" });
+    return;
+  }
   const enriched = await enrichBattle(battle);
   res.json(enriched);
 });

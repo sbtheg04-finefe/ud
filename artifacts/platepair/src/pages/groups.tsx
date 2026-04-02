@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useListGroups } from "@workspace/api-client-react";
+import { useListGroups, getListGroupsQueryKey } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Users, Globe, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export default function Groups() {
-  const { data: groups, isLoading } = useListGroups({ query: { enabled: true } });
+  const { data: groups, isLoading } = useListGroups({ query: { enabled: true, queryKey: getListGroupsQueryKey() } });
 
   return (
     <div className="min-h-screen bg-background">

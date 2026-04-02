@@ -77,6 +77,8 @@ function Router() {
         <Route path="/onboarding" component={Onboarding} />
         <Route path="/" component={Home} />
         <Route path="/battles" component={Battles} />
+        {/* /battles/create must come BEFORE /battles/:battleId to avoid being swallowed */}
+        <Route path="/battles/create">{() => <ProtectedRoute component={CreateBattle} />}</Route>
         <Route path="/battles/:battleId" component={BattleDetail} />
         <Route path="/videos" component={Videos} />
         <Route path="/groups" component={Groups} />
@@ -84,9 +86,8 @@ function Router() {
         <Route path="/meals/:mealId" component={MealDetail} />
         <Route path="/profile/:userId" component={Profile} />
 
-        {/* Protected routes — require sign-in */}
+        {/* Other protected routes */}
         <Route path="/create">{() => <ProtectedRoute component={Create} />}</Route>
-        <Route path="/battles/create">{() => <ProtectedRoute component={CreateBattle} />}</Route>
         <Route path="/profile/:userId/edit">{() => <ProtectedRoute component={EditProfile} />}</Route>
         <Route path="/saved">{() => <ProtectedRoute component={SavedItems} />}</Route>
         <Route path="/partner/dashboard">{() => <ProtectedRoute component={PartnerDashboard} />}</Route>

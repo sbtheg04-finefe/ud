@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useGetUserSaves } from "@workspace/api-client-react";
+import { useGetUserSaves, getGetUserSavesQueryKey } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FeedItemCard } from "@/components/shared/feed-item-card";
@@ -11,8 +11,8 @@ export default function SavedItems() {
   const { data: user } = useCurrentUser();
   const userId = user?.id;
   
-  const { data: savedItems, isLoading } = useGetUserSaves(userId || 0, { 
-    query: { enabled: !!userId } 
+  const { data: savedItems, isLoading } = useGetUserSaves(userId || 0, {
+    query: { enabled: !!userId, queryKey: getGetUserSavesQueryKey(userId || 0) }
   });
 
   return (
