@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useTrack } from "@/hooks/use-track";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChefHat, Building2, Star, Sparkles, Check, ArrowRight, ArrowLeft,
@@ -121,9 +122,18 @@ export default function Onboarding() {
   const [, setLocation] = useLocation();
   const { user: authUser } = useAuth();
   const { toast } = useToast();
+  const { track } = useTrack();
 
   const [step, setStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    track("onboarding_started");
+  }, []);
+
+  useEffect(() => {
+    if (step > 0) track("onboarding_step_viewed", { step });
+  }, [step]);
 
   const [intent, setIntent] = useState<Intent | null>(null);
   const [cookLevel, setCookLevel] = useState<CookLevel | null>(null);
@@ -211,6 +221,8 @@ export default function Onboarding() {
       });
 
       if (!res.ok) throw new Error("Onboarding failed");
+
+      track("onboarding_completed", { intent, roles });
 
       window.location.href =
         wantsPartner ? "/partner/dashboard" :

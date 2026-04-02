@@ -6,3 +6,4 @@ export * from "./videos";
 export * from "./engagement";
 export * from "./battles";
 export * from "./profiles";
+export * from "./events";

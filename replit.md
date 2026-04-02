@@ -158,3 +158,10 @@ Auth + Onboarding pages: `onboarding.tsx` (4-step wizard with tier selection), `
 - New API routes: `GET/POST /api/onboarding/*`, `GET/POST /api/partner/*`, `GET/POST /api/judge/*`
 - Incentive design: non-gatekeeping (all tiers work independently), judge involvement drives 3× battle visibility
 - Referral mechanic: 8-char hex referral code per user, tracked via `referredById` on users table
+
+**Growth Event Tracking:**
+- DB table: `growth_events` (id, userId, sessionId, eventType, metadata JSONB, createdAt)
+- API: `POST /api/events` — fire-and-forget, returns 204, never throws at the user
+- Frontend hook: `useTrack()` at `artifacts/platepair/src/hooks/use-track.ts` — typed event enum, anonymous session ID stored in localStorage
+- Tracked events: `landing_viewed`, `login_clicked`, `onboarding_started`, `onboarding_step_viewed`, `onboarding_intent_selected`, `onboarding_completed`, `onboarding_skipped`, `battle_viewed`, `battle_joined`, `group_created`, `group_joined`, `invite_sent`, `invite_code_copied`, `hack_upvoted`, `hack_ai_review_requested`, `partner_dashboard_viewed`, `judge_queue_viewed`, `feed_filtered`, `meal_shared`
+- Wired: landing page (landing_viewed, login_clicked), onboarding (started, step_viewed, completed)

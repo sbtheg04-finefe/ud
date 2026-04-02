@@ -11,11 +11,13 @@ import battlesRouter from "./battles";
 import onboardingRouter from "./onboarding";
 import partnerRouter from "./partner";
 import judgeRouter from "./judge";
+import eventsRouter from "./events";
 
 const router: IRouter = Router();
 
 router.use(authRouter);
 router.use(healthRouter);
+router.use(eventsRouter);
 router.use("/users", usersRouter);
 router.use("/groups", groupsRouter);
 router.use("/meals", mealsRouter);
