@@ -1,12 +1,15 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { useListBattles, getListBattlesQueryKey, useGetHotBattles, getGetHotBattlesQueryKey, useToggleBattleBookmark } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Navbar } from "@/components/layout/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Swords, Flame, Clock, Users, Trophy, ChevronRight, Star, Zap, Bookmark, BookmarkCheck, TrendingUp, Sparkles, AlertCircle } from "lucide-react";
+import {
+  Swords, Flame, Clock, Trophy, ChevronRight, Star, Bookmark, BookmarkCheck,
+  TrendingUp, AlertCircle, Users, Zap, CheckCircle2, ChevronDown, ChevronUp,
+  SlidersHorizontal, ArrowUpDown,
+} from "lucide-react";
 import { formatDistanceToNow, differenceInHours } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +40,8 @@ const CHALLENGE_LABELS: Record<string, string> = {
   ingredient_restriction: "Pantry Challenge",
   culture_variation: "Culture Remix",
 };
+
+type SortMode = "hot" | "closing_soon" | "most_open" | "newest";
 
 type BattleItem = {
   id: number;
@@ -76,6 +81,29 @@ function SlotProgress({ filled, total }: { filled: number; total: number }) {
   );
 }
 
+function ReadinessIndicator({ participantCount, minParticipants, battleStatus }: {
+  participantCount: number;
+  minParticipants: number;
+  battleStatus: string;
+}) {
+  if (battleStatus !== "open") return null;
+  const needed = minParticipants - participantCount;
+  if (needed <= 0) {
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
+        <CheckCircle2 size={12} />
+        Ready to launch — waiting for host to start
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1.5 text-xs text-amber-600 font-medium">
+      <Users size={12} />
+      Needs {needed} more cook{needed !== 1 ? "s" : ""} to start
+    </div>
+  );
+}
+
 function ClosingSoonBadge({ deadline }: { deadline: string }) {
   const hoursLeft = differenceInHours(new Date(deadline), new Date());
   if (hoursLeft > 24) return null;
@@ -88,10 +116,61 @@ function ClosingSoonBadge({ deadline }: { deadline: string }) {
   );
 }
 
+const SCORING_ROWS = [
+  { label: "Completion", desc: "Photo or video submitted", pct: "20%" },
+  { label: "Creativity", desc: "Originality & substitutions", pct: "20%" },
+  { label: "Presentation", desc: "Photo quality", pct: "20%" },
+  { label: "Judge Score", desc: "Expert review", pct: "20%" },
+  { label: "Timing", desc: "Submitted before deadline", pct: "10%" },
+  { label: "Community", desc: "Peer votes", pct: "7%" },
+  { label: "Journal Bonus", desc: "Reflection note", pct: "+0.5" },
+];
+
+function QuickPreview({ battle }: { battle: BattleItem }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(v => !v); }}
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors mt-2"
+      >
+        {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        {open ? "Hide scoring rules" : "Preview scoring rules"}
+      </button>
+      {open && (
+        <div
+          className="mt-2 rounded-xl border bg-muted/40 p-3 text-xs"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        >
+          <p className="font-semibold mb-2 text-foreground">How you'll be scored</p>
+          <div className="space-y-1.5">
+            {SCORING_ROWS.map((row) => (
+              <div key={row.label} className="flex items-center justify-between">
+                <div>
+                  <span className="font-medium text-foreground">{row.label}</span>
+                  <span className="text-muted-foreground ml-1">— {row.desc}</span>
+                </div>
+                <span className="font-bold text-primary">{row.pct}</span>
+              </div>
+            ))}
+          </div>
+          <Link href={`/battles/${battle.id}`}>
+            <Button size="sm" className="w-full mt-3 rounded-full text-xs h-7 gap-1">
+              <Swords size={12} />
+              Go to Battle
+            </Button>
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function BattleCard({ battle, onBookmark }: { battle: BattleItem; onBookmark?: (id: number) => void }) {
   const scope = SCOPE_LABELS[battle.scopeType] || SCOPE_LABELS.public;
   const status = STATUS_LABELS[battle.battleStatus] || STATUS_LABELS.open;
   const maxP = battle.maxParticipants ?? 16;
+  const minP = battle.minParticipants ?? 4;
   const slotsOpen = battle.slotsOpen ?? Math.max(0, maxP - battle.participantCount);
   const isAlmostFull = slotsOpen <= 2 && slotsOpen > 0;
   const deadline = battle.registrationEnd || battle.submissionDeadline;
@@ -182,8 +261,17 @@ function BattleCard({ battle, onBookmark }: { battle: BattleItem; onBookmark?: (
         )}
 
         {/* Slot progress bar */}
-        <div className="mb-3">
+        <div className="mb-2">
           <SlotProgress filled={battle.participantCount} total={maxP} />
+        </div>
+
+        {/* Battle readiness indicator */}
+        <div className="mb-3">
+          <ReadinessIndicator
+            participantCount={battle.participantCount}
+            minParticipants={minP}
+            battleStatus={battle.battleStatus}
+          />
         </div>
 
         <div className="flex items-center justify-between">
@@ -203,15 +291,57 @@ function BattleCard({ battle, onBookmark }: { battle: BattleItem; onBookmark?: (
           </div>
           <ChevronRight size={16} className="text-muted-foreground group-hover:text-primary transition-colors" />
         </div>
+
+        {/* Quick preview scoring rules */}
+        <QuickPreview battle={battle} />
       </div>
     </div>
   );
+}
+
+const SORT_OPTIONS: { key: SortMode; label: string; icon: React.ReactNode }[] = [
+  { key: "hot", label: "Hot Momentum", icon: <TrendingUp size={12} /> },
+  { key: "closing_soon", label: "Closing Soon", icon: <Clock size={12} /> },
+  { key: "most_open", label: "Most Open", icon: <Users size={12} /> },
+  { key: "newest", label: "Newest", icon: <Zap size={12} /> },
+];
+
+function sortBattles(battles: BattleItem[], mode: SortMode): BattleItem[] {
+  const copy = [...battles];
+  switch (mode) {
+    case "hot":
+      return copy.sort((a, b) => {
+        const aScore = (a.isHot ? 3 : 0) + (a.isFeatured ? 2 : 0) + a.battleWorthinessScore;
+        const bScore = (b.isHot ? 3 : 0) + (b.isFeatured ? 2 : 0) + b.battleWorthinessScore;
+        return bScore - aScore;
+      });
+    case "closing_soon":
+      return copy.sort((a, b) => {
+        const aD = a.registrationEnd || a.submissionDeadline;
+        const bD = b.registrationEnd || b.submissionDeadline;
+        if (!aD && !bD) return 0;
+        if (!aD) return 1;
+        if (!bD) return -1;
+        return new Date(aD).getTime() - new Date(bD).getTime();
+      });
+    case "most_open":
+      return copy.sort((a, b) => {
+        const aOpen = a.slotsOpen ?? Math.max(0, (a.maxParticipants ?? 16) - a.participantCount);
+        const bOpen = b.slotsOpen ?? Math.max(0, (b.maxParticipants ?? 16) - b.participantCount);
+        return bOpen - aOpen;
+      });
+    case "newest":
+      return copy.sort((a, b) => b.id - a.id);
+    default:
+      return copy;
+  }
 }
 
 export default function Battles() {
   const [, setLocation] = useLocation();
   const [filterScope, setFilterScope] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("open");
+  const [sortBy, setSortBy] = useState<SortMode>("hot");
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -246,13 +376,18 @@ export default function Battles() {
     });
   }, [user, bookmarkMutation, toast, queryClient, listParams]);
 
-  const displayedBattles = filterStatus === "closing_soon"
-    ? battles?.filter(b => {
+  const displayedBattles = useMemo(() => {
+    let list = battles ?? [];
+    if (filterStatus === "closing_soon") {
+      list = list.filter(b => {
         const d = (b as any).registrationEnd || (b as any).submissionDeadline;
         if (!d) return false;
-        return differenceInHours(new Date(d), new Date()) <= 24 && differenceInHours(new Date(d), new Date()) >= 0;
-      })
-    : battles;
+        const h = differenceInHours(new Date(d), new Date());
+        return h <= 24 && h >= 0;
+      });
+    }
+    return sortBattles(list as BattleItem[], sortBy);
+  }, [battles, filterStatus, sortBy]);
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
@@ -315,27 +450,49 @@ export default function Battles() {
           ))}
         </div>
 
-        {/* Scope filter */}
-        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
-          <Button
-            size="sm"
-            variant={filterScope === null ? "secondary" : "ghost"}
-            className="rounded-full text-xs h-7"
-            onClick={() => setFilterScope(null)}
-          >
-            All Scopes
-          </Button>
-          {["circle", "local", "public", "global"].map((scope) => (
+        {/* Scope + Sort controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+          {/* Scope pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 flex-1">
             <Button
-              key={scope}
               size="sm"
-              variant={filterScope === scope ? "secondary" : "ghost"}
+              variant={filterScope === null ? "secondary" : "ghost"}
               className="rounded-full text-xs h-7"
-              onClick={() => setFilterScope(scope === filterScope ? null : scope)}
+              onClick={() => setFilterScope(null)}
             >
-              {SCOPE_LABELS[scope]?.label}
+              All Scopes
             </Button>
-          ))}
+            {["circle", "local", "public", "global"].map((scope) => (
+              <Button
+                key={scope}
+                size="sm"
+                variant={filterScope === scope ? "secondary" : "ghost"}
+                className="rounded-full text-xs h-7"
+                onClick={() => setFilterScope(scope === filterScope ? null : scope)}
+              >
+                {SCOPE_LABELS[scope]?.label}
+              </Button>
+            ))}
+          </div>
+
+          {/* Sort bar */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <ArrowUpDown size={13} className="text-muted-foreground" />
+            {SORT_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setSortBy(opt.key)}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap
+                  ${sortBy === opt.key
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}
+              >
+                {opt.icon}
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Battle cards grid */}
