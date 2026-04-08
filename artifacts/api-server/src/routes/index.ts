@@ -17,6 +17,7 @@ import aiRouter from "./ai";
 import notificationsRouter from "./notifications";
 import pointsRouter from "./points";
 import hacksAdminRouter from "./hacks-admin";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -38,5 +39,6 @@ router.use("/ai", aiRouter);
 router.use(notificationsRouter);
 router.use(pointsRouter);
 router.use(hacksAdminRouter);
+router.use(adminRouter);
 
 export default router;

@@ -10,6 +10,7 @@ export interface AuthUser {
   displayName?: string | null;
   username?: string | null;
   roles: Array<"user" | "partner" | "judge">;
+  role?: "user" | "moderator" | "admin";
   onboardingCompleted: boolean;
   referralCode?: string | null;
 }

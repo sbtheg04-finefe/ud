@@ -46,6 +46,7 @@ export const battlesTable = pgTable("battles", {
   inviteCode: text("invite_code").unique(),
   affinityTags: text("affinity_tags").array().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const battleRequirementsTable = pgTable("battle_requirements", {

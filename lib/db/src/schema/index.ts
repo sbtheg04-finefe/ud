@@ -8,3 +8,4 @@ export * from "./battles";
 export * from "./profiles";
 export * from "./events";
 export * from "./social";
+export * from "./admin";

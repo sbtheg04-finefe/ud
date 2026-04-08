@@ -3,8 +3,8 @@ import { logger } from "./lib/logger";
 import cron from "node-cron";
 import { populateHacks, setLastPopulateResult, setNextScheduledRun } from "./lib/hack-populator";
 import { db } from "@workspace/db";
-import { videosTable } from "@workspace/db/schema";
-import { count } from "drizzle-orm";
+import { videosTable, usersTable } from "@workspace/db/schema";
+import { count, eq, asc } from "drizzle-orm";
 
 const rawPort = process.env["PORT"];
 
@@ -27,6 +27,20 @@ app.listen(port, async (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  const adminEmail = process.env["ADMIN_EMAIL"];
+  if (adminEmail) {
+    const [existingAdmin] = await db.select({ role: usersTable.role }).from(usersTable).where(eq(usersTable.role, "admin")).limit(1);
+    if (!existingAdmin) {
+      const [targetUser] = await db.select().from(usersTable).where(eq(usersTable.email, adminEmail)).limit(1);
+      if (targetUser) {
+        await db.update(usersTable).set({ role: "admin" }).where(eq(usersTable.id, targetUser.id));
+        logger.info({ userId: targetUser.id, email: adminEmail }, "Auto-promoted user to admin via ADMIN_EMAIL");
+      } else {
+        logger.warn({ adminEmail }, "ADMIN_EMAIL user not found in database");
+      }
+    }
+  }
 
   const [{ value: existingCount }] = await db.select({ value: count() }).from(videosTable);
   if (Number(existingCount) < 20) {

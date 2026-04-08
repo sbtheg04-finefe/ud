@@ -29,6 +29,7 @@ export const GetCurrentAuthUserResponse = zod.object({
       displayName: zod.string().nullish(),
       username: zod.string().nullish(),
       roles: zod.array(zod.enum(["user", "partner", "judge"])),
+      role: zod.enum(["user", "moderator", "admin"]).optional(),
       onboardingCompleted: zod.boolean(),
       referralCode: zod.string().nullish(),
     }),

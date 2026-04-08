@@ -25,6 +25,13 @@ import JudgeScore from "@/pages/judge-score";
 import CreateGroup from "@/pages/create-group";
 import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
+import AdminDashboard from "@/pages/admin/index";
+import AdminHacks from "@/pages/admin/hacks";
+import AdminUsers from "@/pages/admin/users";
+import AdminMeals from "@/pages/admin/meals";
+import AdminBattles from "@/pages/admin/battles";
+import AdminImport from "@/pages/admin/import";
+import AdminAudit from "@/pages/admin/audit";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +78,41 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   return <Component />;
 }
 
+function AdminRoute({ component: Component }: { component: React.ComponentType }) {
+  const { user, isLoading } = useAuth();
+  const [location] = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-gray-500 text-sm">Checking permissions…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Redirect to={`/login?returnTo=${encodeURIComponent(location)}`} />;
+  }
+
+  if (user.role !== "admin") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
+        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+          <span className="text-3xl">🛡️</span>
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900">Access Denied</h1>
+        <p className="text-gray-500">You need admin privileges to view this page.</p>
+        <a href="/" className="mt-2 text-primary hover:underline text-sm">← Back to PlatePair</a>
+      </div>
+    );
+  }
+
+  return <Component />;
+}
+
 function Router() {
   return (
     <OnboardingGuard>
@@ -99,6 +141,15 @@ function Router() {
         <Route path="/partner/dashboard">{() => <ProtectedRoute component={PartnerDashboard} />}</Route>
         <Route path="/judge/queue">{() => <ProtectedRoute component={JudgeQueue} />}</Route>
         <Route path="/judge/score/:battleId/:assignmentId">{() => <ProtectedRoute component={JudgeScore} />}</Route>
+
+        {/* Admin routes — admin role required */}
+        <Route path="/admin">{() => <AdminRoute component={AdminDashboard} />}</Route>
+        <Route path="/admin/hacks">{() => <AdminRoute component={AdminHacks} />}</Route>
+        <Route path="/admin/users">{() => <AdminRoute component={AdminUsers} />}</Route>
+        <Route path="/admin/meals">{() => <AdminRoute component={AdminMeals} />}</Route>
+        <Route path="/admin/battles">{() => <AdminRoute component={AdminBattles} />}</Route>
+        <Route path="/admin/import">{() => <AdminRoute component={AdminImport} />}</Route>
+        <Route path="/admin/audit">{() => <AdminRoute component={AdminAudit} />}</Route>
 
         <Route component={NotFound} />
       </Switch>

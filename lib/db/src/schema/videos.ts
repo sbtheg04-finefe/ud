@@ -35,6 +35,7 @@ export const videosTable = pgTable("videos", {
   populatedAt: timestamp("populated_at", { withTimezone: true }),
   isDemo: integer("is_demo").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const hackVotesTable = pgTable("hack_votes", {

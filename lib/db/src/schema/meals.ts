@@ -24,6 +24,7 @@ export const mealsTable = pgTable("meals", {
   saveCount: integer("save_count").notNull().default(0),
   commentCount: integer("comment_count").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 export const insertMealSchema = createInsertSchema(mealsTable).omit({ id: true, createdAt: true, likeCount: true, saveCount: true, commentCount: true });

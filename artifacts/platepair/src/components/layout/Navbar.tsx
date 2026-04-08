@@ -10,13 +10,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, Video, Bookmark, PlusCircle, ChefHat, Swords, Building2, Star, LogOut, UserCircle2, LayoutDashboard } from "lucide-react";
+import { Home, Users, Video, Bookmark, PlusCircle, ChefHat, Swords, Building2, Star, LogOut, UserCircle2, LayoutDashboard, Shield } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 
 export function Navbar() {
   const [location] = useLocation();
   const { data: user, isPartner, isJudge } = useCurrentUser();
-  const { logout, isAuthenticated, isLoading } = useAuth();
+  const { logout, isAuthenticated, isLoading, user: authUser } = useAuth();
+  const isAdmin = authUser?.role === "admin";
 
   const navItems = [
     { href: "/", label: "Feed", icon: Home },
@@ -147,6 +148,13 @@ export function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link href="/judge/queue" className="cursor-pointer w-full flex items-center gap-2 text-purple-600">
                       <Star size={14} /> Judge Queue
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin" className="cursor-pointer w-full flex items-center gap-2 text-orange-600 font-semibold">
+                      <Shield size={14} /> Admin Panel
                     </Link>
                   </DropdownMenuItem>
                 )}
