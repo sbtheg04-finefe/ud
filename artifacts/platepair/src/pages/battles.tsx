@@ -422,6 +422,39 @@ export default function Battles() {
           </Link>
         </div>
 
+        {/* #PlatePairBattle Viral Challenge Banner */}
+        <div className="mb-8 rounded-2xl overflow-hidden bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 p-[2px]">
+          <div className="rounded-2xl bg-gradient-to-br from-orange-50 to-pink-50 p-5">
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xl">🔥</span>
+                  <span className="text-xs font-bold text-orange-600 uppercase tracking-widest">#PlatePairBattle Challenge</span>
+                </div>
+                <h2 className="text-xl font-serif font-bold text-gray-900 mb-1">
+                  Turn viral recipes into battles. Win real rewards.
+                </h2>
+                <p className="text-sm text-gray-600 mb-3">
+                  Copy a recipe you love, create a battle, and see who cooks it best. Winner gets featured + booking site.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {["#RecipeRemixBattle", "#DillWingsBattle", "#PlatePairBattle"].map(tag => (
+                    <span key={tag} className="text-xs bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full font-semibold">{tag}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 shrink-0">
+                <Link href="/battles/create">
+                  <Button className="w-full rounded-full gap-2 bg-orange-500 hover:bg-orange-600 text-white shadow-lg">
+                    <Flame size={15} /> Start a Battle
+                  </Button>
+                </Link>
+                <p className="text-[11px] text-center text-gray-500">Top 10 weekly winners get featured</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Hot Battles Section */}
         {hotBattles && hotBattles.length > 0 && (
           <div className="mb-8">

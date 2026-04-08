@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Calendar, ChefHat, PlayCircle, Edit, Zap, Sparkles, LayoutDashboard } from "lucide-react";
+import { MapPin, Calendar, ChefHat, PlayCircle, Edit, Zap, Sparkles, LayoutDashboard, Trophy, Swords } from "lucide-react";
 
 const POINT_REWARDS = [
   { points: 5, label: "Bonus battle entry", icon: "⚔️" },
@@ -34,12 +34,26 @@ function useWeeklyPoints() {
   return data;
 }
 
+function useBattlesWon(userId: number) {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (!userId) { setLoading(false); return; }
+    fetch(`/api/battles/won?userId=${userId}`, { credentials: "include" })
+      .then(r => r.json())
+      .then(d => { setData(Array.isArray(d) ? d : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [userId]);
+  return { data, loading };
+}
+
 export default function Profile() {
   const { userId } = useParams();
   const id = Number(userId);
   const { data: currentUser } = useCurrentUser();
   const isOwnProfile = currentUser?.id === id;
   const weeklyPoints = useWeeklyPoints();
+  const { data: battlesWon } = useBattlesWon(id);
 
   const { data: user, isLoading: isLoadingUser } = useGetUser(id, { query: { enabled: !!id, queryKey: getGetUserQueryKey(id) } });
   const { data: stats, isLoading: isLoadingStats } = useGetUserStats(id, { query: { enabled: !!id, queryKey: getGetUserStatsQueryKey(id) } });
@@ -143,6 +157,48 @@ export default function Profile() {
                 </div>
               )}
             </div>
+
+            {/* Battles Won */}
+            {battlesWon.length > 0 && (
+              <div className="bg-card border rounded-2xl p-5 shadow-sm space-y-3">
+                <h3 className="font-serif font-bold text-lg flex items-center gap-2">
+                  <Trophy size={18} className="text-yellow-500" />
+                  Battle Wins
+                  <span className="ml-auto text-sm font-normal text-muted-foreground">{battlesWon.length} total</span>
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {battlesWon.slice(0, 6).map((b: any) => (
+                    <Link key={b.id} href={`/battles/${b.id}`}>
+                      <div className="border rounded-xl overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+                        {b.entry_photo_url ? (
+                          <img
+                            src={b.entry_photo_url.startsWith("/objects/") ? `/api/storage${b.entry_photo_url}` : b.entry_photo_url}
+                            alt={b.title}
+                            className="w-full h-16 object-cover"
+                          />
+                        ) : b.cover_image_url ? (
+                          <img src={b.cover_image_url} alt={b.title} className="w-full h-16 object-cover" />
+                        ) : (
+                          <div className="w-full h-16 bg-gradient-to-br from-yellow-100 to-amber-100 flex items-center justify-center">
+                            <Trophy size={20} className="text-yellow-500" />
+                          </div>
+                        )}
+                        <div className="p-1.5">
+                          <p className="text-[10px] font-semibold truncate leading-tight">{b.title}</p>
+                          <p className="text-[10px] text-yellow-600 font-bold">🏆 Champion</p>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+                {!isOwnProfile && (
+                  <p className="text-xs text-center text-muted-foreground">
+                    <Swords size={10} className="inline mr-1" />
+                    Authority score earned through battle wins
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Weekly Points (own profile only) */}
             {isOwnProfile && weeklyPoints && (

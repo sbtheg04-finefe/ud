@@ -374,6 +374,25 @@ router.post("/from-content", async (req, res) => {
   res.status(201).json(enriched);
 });
 
+// Get battles won by a user (top-scored entry in completed battles) — must come before /:battleId
+router.get("/won", async (req, res) => {
+  const userId = Number(req.query.userId);
+  if (!userId) { res.json([]); return; }
+
+  const rows = await db.execute(
+    sql`SELECT b.id, b.title, b.cover_image_url, b.challenge_type, b.participant_count,
+               b.created_at, e.total_score, e.photo_url as entry_photo_url
+        FROM battles b
+        JOIN battle_entries e ON e.battle_id = b.id
+        WHERE b.battle_status = 'completed'
+          AND e.user_id = ${userId}
+          AND e.total_score = (SELECT MAX(e2.total_score) FROM battle_entries e2 WHERE e2.battle_id = b.id)
+        ORDER BY b.created_at DESC LIMIT 12`
+  );
+
+  res.json(rows.rows);
+});
+
 router.get("/:battleId", async (req, res) => {
   const [battle] = await db.select().from(battlesTable).where(eq(battlesTable.id, Number(req.params.battleId)));
   if (!battle) {
@@ -529,6 +548,56 @@ router.patch("/:battleId/status", async (req, res) => {
     .set({ battleStatus: status as typeof battle.battleStatus })
     .where(eq(battlesTable.id, battleId))
     .returning();
+
+  // When battle completes — award winner, auto-post to feed, notify participants
+  if (status === "completed") {
+    try {
+      // Find top entry by totalScore
+      const [topEntry] = await db.select().from(battleEntriesTable)
+        .where(eq(battleEntriesTable.battleId, battleId))
+        .orderBy(desc(battleEntriesTable.totalScore))
+        .limit(1);
+
+      if (topEntry) {
+        // Award winner 5 points
+        await awardPoints(topEntry.userId, "battle_win", 5);
+
+        // Notify winner
+        await createNotification(
+          topEntry.userId,
+          "battle_completed",
+          "🏆 You won a battle!",
+          `Your entry won "${battle.title}"! Keep cooking to build your authority score.`,
+          { battleId }
+        );
+
+        // Auto-post a result announcement to the community feed
+        await db.insert(mealsTable).values({
+          authorId: battle.createdBy,
+          title: `🏆 "${battle.title}" — Results are in!`,
+          description: `The ${battle.challengeType?.replace(/_/g, " ")} battle just completed with ${battle.participantCount} cooks competing. See who came out on top!`,
+          mealType: "other",
+          shareStatus: "finished",
+          cuisineTags: ["battle-result"],
+          dietaryTags: [],
+        });
+      }
+
+      // Notify creator their battle completed
+      await createNotification(
+        battle.createdBy,
+        "battle_completed",
+        "🎉 Battle completed!",
+        `"${battle.title}" wrapped up with ${battle.participantCount} participants. Check the results!`,
+        { battleId }
+      );
+
+      // Award creator 3 bonus points for a completed battle
+      await awardPoints(battle.createdBy, "battle_created", 3);
+    } catch (e) {
+      console.error("Post-completion hooks failed:", e);
+    }
+  }
 
   res.json(updated);
 });
