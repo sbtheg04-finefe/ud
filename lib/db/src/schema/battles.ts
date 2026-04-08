@@ -39,6 +39,11 @@ export const battlesTable = pgTable("battles", {
   sourceThumbnailUrl: text("source_thumbnail_url"),
   bracketData: jsonb("bracket_data"),
   maxParticipants: integer("max_participants").notNull().default(16),
+  minParticipants: integer("min_participants").notNull().default(4),
+  isHot: boolean("is_hot").notNull().default(false),
+  isFeatured: boolean("is_featured").notNull().default(false),
+  inviteCode: text("invite_code").unique(),
+  affinityTags: text("affinity_tags").array().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -89,6 +94,8 @@ export const battleEntriesTable = pgTable("battle_entries", {
   completionScore: real("completion_score").notNull().default(0),
   creativityScore: real("creativity_score").notNull().default(0),
   presentationScore: real("presentation_score").notNull().default(0),
+  judgeScore: real("judge_score").notNull().default(0),
+  timingScore: real("timing_score").notNull().default(0),
   peerVotes: integer("peer_votes").notNull().default(0),
   totalScore: real("total_score").notNull().default(0),
   rank: integer("rank"),

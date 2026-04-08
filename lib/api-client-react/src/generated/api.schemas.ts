@@ -598,6 +598,16 @@ export interface Battle {
   judgingEnd?: string | null;
   participantCount: number;
   entryCount: number;
+  maxParticipants: number;
+  minParticipants: number;
+  /** Derived field maxParticipants - participantCount */
+  slotsOpen: number;
+  isHot: boolean;
+  isFeatured: boolean;
+  inviteCode?: string | null;
+  affinityTags: string[];
+  /** Whether the current user has bookmarked this battle */
+  isBookmarked?: boolean;
   coverImageUrl?: string | null;
   createdAt: string;
 }
@@ -640,6 +650,8 @@ export interface BattleEntry {
   completionScore: number;
   creativityScore: number;
   presentationScore: number;
+  judgeScore: number;
+  timingScore: number;
   peerVotes: number;
   totalScore: number;
   rank?: number | null;
@@ -1072,6 +1084,23 @@ export type TrackBattleInterest201 = {
 export type JoinBattle200 = {
   ok: boolean;
   participantCount: number;
+};
+
+export type ToggleBattleBookmark200 = {
+  bookmarked: boolean;
+};
+
+export type GetBattleInviteLink200 = {
+  inviteCode: string;
+  inviteUrl: string;
+};
+
+export type GetHotBattlesParams = {
+  limit?: number;
+};
+
+export type GetRecommendedBattlesParams = {
+  limit?: number;
 };
 
 export type GetBattleLeaderboardParams = {

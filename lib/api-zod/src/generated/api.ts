@@ -202,6 +202,19 @@ export const GetPartnerBattlesResponseItem = zod
     judgingEnd: zod.coerce.date().nullish(),
     participantCount: zod.number(),
     entryCount: zod.number(),
+    maxParticipants: zod.number(),
+    minParticipants: zod.number(),
+    slotsOpen: zod
+      .number()
+      .describe("Derived field maxParticipants - participantCount"),
+    isHot: zod.boolean(),
+    isFeatured: zod.boolean(),
+    inviteCode: zod.string().nullish(),
+    affinityTags: zod.array(zod.string()),
+    isBookmarked: zod
+      .boolean()
+      .optional()
+      .describe("Whether the current user has bookmarked this battle"),
     coverImageUrl: zod.string().nullish(),
     createdAt: zod.coerce.date(),
   })
@@ -417,6 +430,8 @@ export const GetPartnerBattlesResponseItem = zod
               completionScore: zod.number(),
               creativityScore: zod.number(),
               presentationScore: zod.number(),
+              judgeScore: zod.number(),
+              timingScore: zod.number(),
               peerVotes: zod.number(),
               totalScore: zod.number(),
               rank: zod.number().nullish(),
@@ -559,6 +574,19 @@ export const GetJudgeAssignmentsResponseItem = zod.object({
       judgingEnd: zod.coerce.date().nullish(),
       participantCount: zod.number(),
       entryCount: zod.number(),
+      maxParticipants: zod.number(),
+      minParticipants: zod.number(),
+      slotsOpen: zod
+        .number()
+        .describe("Derived field maxParticipants - participantCount"),
+      isHot: zod.boolean(),
+      isFeatured: zod.boolean(),
+      inviteCode: zod.string().nullish(),
+      affinityTags: zod.array(zod.string()),
+      isBookmarked: zod
+        .boolean()
+        .optional()
+        .describe("Whether the current user has bookmarked this battle"),
       coverImageUrl: zod.string().nullish(),
       createdAt: zod.coerce.date(),
     })
@@ -774,6 +802,8 @@ export const GetJudgeAssignmentsResponseItem = zod.object({
                 completionScore: zod.number(),
                 creativityScore: zod.number(),
                 presentationScore: zod.number(),
+                judgeScore: zod.number(),
+                timingScore: zod.number(),
                 peerVotes: zod.number(),
                 totalScore: zod.number(),
                 rank: zod.number().nullish(),
@@ -858,6 +888,19 @@ export const AcceptJudgeAssignmentResponse = zod.object({
       judgingEnd: zod.coerce.date().nullish(),
       participantCount: zod.number(),
       entryCount: zod.number(),
+      maxParticipants: zod.number(),
+      minParticipants: zod.number(),
+      slotsOpen: zod
+        .number()
+        .describe("Derived field maxParticipants - participantCount"),
+      isHot: zod.boolean(),
+      isFeatured: zod.boolean(),
+      inviteCode: zod.string().nullish(),
+      affinityTags: zod.array(zod.string()),
+      isBookmarked: zod
+        .boolean()
+        .optional()
+        .describe("Whether the current user has bookmarked this battle"),
       coverImageUrl: zod.string().nullish(),
       createdAt: zod.coerce.date(),
     })
@@ -1073,6 +1116,8 @@ export const AcceptJudgeAssignmentResponse = zod.object({
                 completionScore: zod.number(),
                 creativityScore: zod.number(),
                 presentationScore: zod.number(),
+                judgeScore: zod.number(),
+                timingScore: zod.number(),
                 peerVotes: zod.number(),
                 totalScore: zod.number(),
                 rank: zod.number().nullish(),
@@ -2759,6 +2804,19 @@ export const ListBattlesResponseItem = zod
     judgingEnd: zod.coerce.date().nullish(),
     participantCount: zod.number(),
     entryCount: zod.number(),
+    maxParticipants: zod.number(),
+    minParticipants: zod.number(),
+    slotsOpen: zod
+      .number()
+      .describe("Derived field maxParticipants - participantCount"),
+    isHot: zod.boolean(),
+    isFeatured: zod.boolean(),
+    inviteCode: zod.string().nullish(),
+    affinityTags: zod.array(zod.string()),
+    isBookmarked: zod
+      .boolean()
+      .optional()
+      .describe("Whether the current user has bookmarked this battle"),
     coverImageUrl: zod.string().nullish(),
     createdAt: zod.coerce.date(),
   })
@@ -2974,6 +3032,8 @@ export const ListBattlesResponseItem = zod
               completionScore: zod.number(),
               creativityScore: zod.number(),
               presentationScore: zod.number(),
+              judgeScore: zod.number(),
+              timingScore: zod.number(),
               peerVotes: zod.number(),
               totalScore: zod.number(),
               rank: zod.number().nullish(),
@@ -3082,6 +3142,19 @@ export const GetBattleResponse = zod
     judgingEnd: zod.coerce.date().nullish(),
     participantCount: zod.number(),
     entryCount: zod.number(),
+    maxParticipants: zod.number(),
+    minParticipants: zod.number(),
+    slotsOpen: zod
+      .number()
+      .describe("Derived field maxParticipants - participantCount"),
+    isHot: zod.boolean(),
+    isFeatured: zod.boolean(),
+    inviteCode: zod.string().nullish(),
+    affinityTags: zod.array(zod.string()),
+    isBookmarked: zod
+      .boolean()
+      .optional()
+      .describe("Whether the current user has bookmarked this battle"),
     coverImageUrl: zod.string().nullish(),
     createdAt: zod.coerce.date(),
   })
@@ -3297,6 +3370,8 @@ export const GetBattleResponse = zod
               completionScore: zod.number(),
               creativityScore: zod.number(),
               presentationScore: zod.number(),
+              judgeScore: zod.number(),
+              timingScore: zod.number(),
               peerVotes: zod.number(),
               totalScore: zod.number(),
               rank: zod.number().nullish(),
@@ -3346,6 +3421,8 @@ export const ListBattleEntriesResponseItem = zod
     completionScore: zod.number(),
     creativityScore: zod.number(),
     presentationScore: zod.number(),
+    judgeScore: zod.number(),
+    timingScore: zod.number(),
     peerVotes: zod.number(),
     totalScore: zod.number(),
     rank: zod.number().nullish(),
@@ -3423,6 +3500,155 @@ export const JoinBattleResponse = zod.object({
   ok: zod.boolean(),
   participantCount: zod.number(),
 });
+
+/**
+ * @summary Toggle bookmark (save) a battle for the current user
+ */
+export const ToggleBattleBookmarkParams = zod.object({
+  battleId: zod.coerce.number(),
+});
+
+export const ToggleBattleBookmarkResponse = zod.object({
+  bookmarked: zod.boolean(),
+});
+
+/**
+ * @summary Get or generate an invite link for a battle
+ */
+export const GetBattleInviteLinkParams = zod.object({
+  battleId: zod.coerce.number(),
+});
+
+export const GetBattleInviteLinkResponse = zod.object({
+  inviteCode: zod.string(),
+  inviteUrl: zod.string(),
+});
+
+/**
+ * @summary Get hot and trending battles
+ */
+export const GetHotBattlesQueryParams = zod.object({
+  limit: zod.coerce.number().optional(),
+});
+
+export const GetHotBattlesResponseItem = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  slug: zod.string(),
+  description: zod.string().nullish(),
+  sourceType: zod.enum(["meal", "video", "external"]),
+  sourceMealId: zod.number().nullish(),
+  sourceVideoId: zod.number().nullish(),
+  challengeType: zod.enum([
+    "solo_remake",
+    "team_battle",
+    "remix_battle",
+    "speed_battle",
+    "budget_battle",
+    "ingredient_restriction",
+    "culture_variation",
+  ]),
+  scopeType: zod.enum(["private", "circle", "local", "public", "global"]),
+  battleStatus: zod.enum([
+    "draft",
+    "open",
+    "live",
+    "judging",
+    "completed",
+    "archived",
+  ]),
+  groupId: zod.number().nullish(),
+  createdBy: zod.number(),
+  battleWorthinessScore: zod.number(),
+  maxTeamSize: zod.number(),
+  registrationStart: zod.coerce.date().nullish(),
+  registrationEnd: zod.coerce.date().nullish(),
+  prepStart: zod.coerce.date().nullish(),
+  submissionDeadline: zod.coerce.date().nullish(),
+  judgingEnd: zod.coerce.date().nullish(),
+  participantCount: zod.number(),
+  entryCount: zod.number(),
+  maxParticipants: zod.number(),
+  minParticipants: zod.number(),
+  slotsOpen: zod
+    .number()
+    .describe("Derived field maxParticipants - participantCount"),
+  isHot: zod.boolean(),
+  isFeatured: zod.boolean(),
+  inviteCode: zod.string().nullish(),
+  affinityTags: zod.array(zod.string()),
+  isBookmarked: zod
+    .boolean()
+    .optional()
+    .describe("Whether the current user has bookmarked this battle"),
+  coverImageUrl: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const GetHotBattlesResponse = zod.array(GetHotBattlesResponseItem);
+
+/**
+ * @summary Get battles recommended for the current user based on affinity
+ */
+export const GetRecommendedBattlesQueryParams = zod.object({
+  limit: zod.coerce.number().optional(),
+});
+
+export const GetRecommendedBattlesResponseItem = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  slug: zod.string(),
+  description: zod.string().nullish(),
+  sourceType: zod.enum(["meal", "video", "external"]),
+  sourceMealId: zod.number().nullish(),
+  sourceVideoId: zod.number().nullish(),
+  challengeType: zod.enum([
+    "solo_remake",
+    "team_battle",
+    "remix_battle",
+    "speed_battle",
+    "budget_battle",
+    "ingredient_restriction",
+    "culture_variation",
+  ]),
+  scopeType: zod.enum(["private", "circle", "local", "public", "global"]),
+  battleStatus: zod.enum([
+    "draft",
+    "open",
+    "live",
+    "judging",
+    "completed",
+    "archived",
+  ]),
+  groupId: zod.number().nullish(),
+  createdBy: zod.number(),
+  battleWorthinessScore: zod.number(),
+  maxTeamSize: zod.number(),
+  registrationStart: zod.coerce.date().nullish(),
+  registrationEnd: zod.coerce.date().nullish(),
+  prepStart: zod.coerce.date().nullish(),
+  submissionDeadline: zod.coerce.date().nullish(),
+  judgingEnd: zod.coerce.date().nullish(),
+  participantCount: zod.number(),
+  entryCount: zod.number(),
+  maxParticipants: zod.number(),
+  minParticipants: zod.number(),
+  slotsOpen: zod
+    .number()
+    .describe("Derived field maxParticipants - participantCount"),
+  isHot: zod.boolean(),
+  isFeatured: zod.boolean(),
+  inviteCode: zod.string().nullish(),
+  affinityTags: zod.array(zod.string()),
+  isBookmarked: zod
+    .boolean()
+    .optional()
+    .describe("Whether the current user has bookmarked this battle"),
+  coverImageUrl: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const GetRecommendedBattlesResponse = zod.array(
+  GetRecommendedBattlesResponseItem,
+);
 
 /**
  * @summary Score a meal or video as a battle candidate
@@ -3541,6 +3767,19 @@ export const GetUserBattlesResponseItem = zod
     judgingEnd: zod.coerce.date().nullish(),
     participantCount: zod.number(),
     entryCount: zod.number(),
+    maxParticipants: zod.number(),
+    minParticipants: zod.number(),
+    slotsOpen: zod
+      .number()
+      .describe("Derived field maxParticipants - participantCount"),
+    isHot: zod.boolean(),
+    isFeatured: zod.boolean(),
+    inviteCode: zod.string().nullish(),
+    affinityTags: zod.array(zod.string()),
+    isBookmarked: zod
+      .boolean()
+      .optional()
+      .describe("Whether the current user has bookmarked this battle"),
     coverImageUrl: zod.string().nullish(),
     createdAt: zod.coerce.date(),
   })
@@ -3756,6 +3995,8 @@ export const GetUserBattlesResponseItem = zod
               completionScore: zod.number(),
               creativityScore: zod.number(),
               presentationScore: zod.number(),
+              judgeScore: zod.number(),
+              timingScore: zod.number(),
               peerVotes: zod.number(),
               totalScore: zod.number(),
               rank: zod.number().nullish(),

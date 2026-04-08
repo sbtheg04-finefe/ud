@@ -1159,6 +1159,97 @@ paths:
                   - ok
                   - participantCount
 
+  /battles/{battleId}/bookmark:
+    post:
+      operationId: toggleBattleBookmark
+      tags: [battles]
+      summary: Toggle bookmark (save) a battle for the current user
+      parameters:
+        - name: battleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Bookmark toggled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookmarked:
+                    type: boolean
+                required:
+                  - bookmarked
+
+  /battles/{battleId}/invite-link:
+    get:
+      operationId: getBattleInviteLink
+      tags: [battles]
+      summary: Get or generate an invite link for a battle
+      parameters:
+        - name: battleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invite link
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  inviteCode:
+                    type: string
+                  inviteUrl:
+                    type: string
+                required:
+                  - inviteCode
+                  - inviteUrl
+
+  /battles/hot:
+    get:
+      operationId: getHotBattles
+      tags: [battles]
+      summary: Get hot and trending battles
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Hot battles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Battle"
+
+  /battles/recommended:
+    get:
+      operationId: getRecommendedBattles
+      tags: [battles]
+      summary: Get battles recommended for the current user based on affinity
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recommended battles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Battle"
+
   /battles/score-candidate:
     post:
       operationId: scoreBattleCandidate
@@ -2232,6 +2323,27 @@ components:
           type: integer
         entryCount:
           type: integer
+        maxParticipants:
+          type: integer
+        minParticipants:
+          type: integer
+        slotsOpen:
+          type: integer
+          description: Derived field maxParticipants - participantCount
+        isHot:
+          type: boolean
+        isFeatured:
+          type: boolean
+        inviteCode:
+          type: string
+          nullable: true
+        affinityTags:
+          type: array
+          items:
+            type: string
+        isBookmarked:
+          type: boolean
+          description: Whether the current user has bookmarked this battle
         coverImageUrl:
           type: string
           nullable: true
@@ -2251,6 +2363,12 @@ components:
         - maxTeamSize
         - participantCount
         - entryCount
+        - maxParticipants
+        - minParticipants
+        - slotsOpen
+        - isHot
+        - isFeatured
+        - affinityTags
         - createdAt
 
     BattleRequirements:
@@ -2359,6 +2477,10 @@ components:
           type: number
         presentationScore:
           type: number
+        judgeScore:
+          type: number
+        timingScore:
+          type: number
         peerVotes:
           type: integer
         totalScore:
@@ -2378,6 +2500,8 @@ components:
         - completionScore
         - creativityScore
         - presentationScore
+        - judgeScore
+        - timingScore
         - peerVotes
         - totalScore
         - submittedAt

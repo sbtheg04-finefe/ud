@@ -11,7 +11,8 @@ import {
   groupsTable,
   groupMembershipsTable,
 } from "@workspace/db/schema";
-import { eq, and, desc, count, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, count, sql, inArray, isNotNull, or } from "drizzle-orm";
+import crypto from "node:crypto";
 import { extractUrl } from "../lib/url-extractor";
 
 const router = Router();
@@ -89,7 +90,26 @@ function computeBattleWorthiness(meal: typeof mealsTable.$inferSelect | null, vi
   };
 }
 
-async function enrichBattle(battle: typeof battlesTable.$inferSelect) {
+function computeTotalScore(entry: {
+  completionScore: number;
+  creativityScore: number;
+  presentationScore: number;
+  judgeScore?: number;
+  timingScore?: number;
+  peerVotes?: number;
+  journalNote?: string | null;
+}): number {
+  const completion = entry.completionScore * 0.2;
+  const creativity = entry.creativityScore * 0.2;
+  const presentation = entry.presentationScore * 0.2;
+  const judge = (entry.judgeScore ?? 0) * 0.2;
+  const timing = (entry.timingScore ?? 0) * 0.1;
+  const peer = Math.min((entry.peerVotes ?? 0) * 0.5, 5) * 0.07;
+  const journalBonus = entry.journalNote ? 0.5 : 0;
+  return Math.min(10, completion + creativity + presentation + judge + timing + peer + journalBonus);
+}
+
+async function enrichBattle(battle: typeof battlesTable.$inferSelect, userId?: number) {
   const [creator] = await db.select().from(usersTable).where(eq(usersTable.id, battle.createdBy));
   const [requirements] = await db.select().from(battleRequirementsTable).where(eq(battleRequirementsTable.battleId, battle.id));
   
@@ -125,8 +145,19 @@ async function enrichBattle(battle: typeof battlesTable.$inferSelect) {
     })
   );
 
+  let isBookmarked = false;
+  if (userId) {
+    const [bookmark] = await db.select().from(battleInterestTable)
+      .where(and(eq(battleInterestTable.battleId, battle.id), eq(battleInterestTable.userId, userId), eq(battleInterestTable.intentType, "saved")));
+    isBookmarked = !!bookmark;
+  }
+
+  const slotsOpen = Math.max(0, battle.maxParticipants - battle.participantCount);
+
   return {
     ...battle,
+    slotsOpen,
+    isBookmarked,
     creator,
     requirements: requirements || null,
     sourceMeal,
@@ -135,8 +166,35 @@ async function enrichBattle(battle: typeof battlesTable.$inferSelect) {
   };
 }
 
+router.get("/hot", async (req, res) => {
+  const { limit = "6" } = req.query as Record<string, string>;
+  const userId = req.user?.id;
+  const battles = await db.select().from(battlesTable)
+    .where(and(eq(battlesTable.isHot, true), eq(battlesTable.battleStatus, "open")))
+    .orderBy(desc(battlesTable.battleWorthinessScore), desc(battlesTable.participantCount))
+    .limit(Number(limit));
+  const enriched = await Promise.all(battles.map(b => enrichBattle(b, userId)));
+  res.json(enriched);
+});
+
+router.get("/recommended", async (req, res) => {
+  const { limit = "6" } = req.query as Record<string, string>;
+  const userId = req.user?.id;
+  // Base recommendation: open battles sorted by worthiness score, exclude full ones
+  const battles = await db.select().from(battlesTable)
+    .where(and(
+      eq(battlesTable.battleStatus, "open"),
+      sql`${battlesTable.participantCount} < ${battlesTable.maxParticipants}`
+    ))
+    .orderBy(desc(battlesTable.isFeatured), desc(battlesTable.battleWorthinessScore))
+    .limit(Number(limit));
+  const enriched = await Promise.all(battles.map(b => enrichBattle(b, userId)));
+  res.json(enriched);
+});
+
 router.get("/", async (req, res) => {
-  const { scopeType, battleStatus, challengeType, groupId, limit = "20", offset = "0" } = req.query as Record<string, string>;
+  const { scopeType, battleStatus, challengeType, groupId, isHot, isFeatured, limit = "20", offset = "0" } = req.query as Record<string, string>;
+  const userId = req.user?.id;
 
   let query = db.select().from(battlesTable).$dynamic();
 
@@ -145,16 +203,18 @@ router.get("/", async (req, res) => {
   if (battleStatus) conditions.push(eq(battlesTable.battleStatus, battleStatus as any));
   if (challengeType) conditions.push(eq(battlesTable.challengeType, challengeType as any));
   if (groupId) conditions.push(eq(battlesTable.groupId, Number(groupId)));
+  if (isHot === "true") conditions.push(eq(battlesTable.isHot, true));
+  if (isFeatured === "true") conditions.push(eq(battlesTable.isFeatured, true));
 
   if (conditions.length > 0) {
     query = query.where(and(...conditions));
   }
 
-  const battles = await query.orderBy(desc(battlesTable.battleWorthinessScore), desc(battlesTable.createdAt))
+  const battles = await query.orderBy(desc(battlesTable.isHot), desc(battlesTable.isFeatured), desc(battlesTable.battleWorthinessScore), desc(battlesTable.createdAt))
     .limit(Number(limit))
     .offset(Number(offset));
 
-  const enriched = await Promise.all(battles.map(enrichBattle));
+  const enriched = await Promise.all(battles.map(b => enrichBattle(b, userId)));
   res.json(enriched);
 });
 
@@ -197,7 +257,7 @@ router.post("/", async (req, res) => {
     estimatedTimeMinutes: estimatedTimeMinutes || null, difficultyLevel, dietaryNotes,
   });
 
-  const enriched = await enrichBattle(battle);
+  const enriched = await enrichBattle(battle, req.user?.id);
   res.status(201).json(enriched);
 });
 
@@ -307,7 +367,7 @@ router.post("/from-content", async (req, res) => {
     dietaryNotes,
   });
 
-  const enriched = await enrichBattle(battle);
+  const enriched = await enrichBattle(battle, req.user?.id);
   res.status(201).json(enriched);
 });
 
@@ -317,7 +377,7 @@ router.get("/:battleId", async (req, res) => {
     res.status(404).json({ error: "Battle not found" });
     return;
   }
-  const enriched = await enrichBattle(battle);
+  const enriched = await enrichBattle(battle, req.user?.id);
   res.json(enriched);
 });
 
@@ -341,16 +401,29 @@ router.post("/:battleId/entries", async (req, res) => {
   const { userId, teamId, photoUrl, videoUrl, caption, journalNote, substitutionsUsed = [] } = req.body;
   const battleId = Number(req.params.battleId);
 
-  const completionScore = (photoUrl || videoUrl) ? 8 : 5;
-  const journalBonus = journalNote ? 1 : 0;
-  const creativityScore = 6 + journalBonus;
-  const presentationScore = photoUrl ? 7 : 5;
-  const totalScore = (completionScore + creativityScore + presentationScore) / 3;
+  const [battle] = await db.select().from(battlesTable).where(eq(battlesTable.id, battleId));
+
+  const completionScore = (photoUrl || videoUrl) ? 9 : 5;
+  const creativityScore = 6 + (journalNote ? 1 : 0) + (substitutionsUsed.length > 0 ? 1 : 0);
+  const presentationScore = photoUrl ? 8 : 5;
+
+  // Timing score: full marks if submitted before deadline
+  let timingScore = 5;
+  if (battle?.submissionDeadline) {
+    const now = new Date();
+    const deadline = new Date(battle.submissionDeadline);
+    const msLeft = deadline.getTime() - now.getTime();
+    if (msLeft > 0) timingScore = 10; // on-time
+    else if (msLeft > -1000 * 60 * 30) timingScore = 6; // within 30 min late
+    else timingScore = 2; // late
+  }
+
+  const totalScore = computeTotalScore({ completionScore, creativityScore, presentationScore, timingScore, journalNote });
 
   const [entry] = await db.insert(battleEntriesTable).values({
     battleId, userId, teamId: teamId || null, photoUrl, videoUrl, caption, journalNote,
     substitutionsUsed, status: "submitted",
-    completionScore, creativityScore, presentationScore, totalScore,
+    completionScore, creativityScore, presentationScore, timingScore, totalScore,
   }).returning();
 
   await db.update(battlesTable)
@@ -365,16 +438,24 @@ router.post("/:battleId/join", async (req, res) => {
   const { userId } = req.body;
   const battleId = Number(req.params.battleId);
 
-  await db.update(battlesTable)
+  const [updated] = await db.update(battlesTable)
     .set({ participantCount: sql`${battlesTable.participantCount} + 1` })
-    .where(eq(battlesTable.id, battleId));
+    .where(eq(battlesTable.id, battleId))
+    .returning();
+
+  // Auto-mark as hot when >= 50% of slots are filled with min 4 participants
+  if (updated && !updated.isHot) {
+    const fillRate = updated.participantCount / Math.max(1, updated.maxParticipants);
+    if (fillRate >= 0.5 && updated.participantCount >= 4) {
+      await db.update(battlesTable).set({ isHot: true }).where(eq(battlesTable.id, battleId));
+    }
+  }
 
   await db.insert(battleInterestTable).values({
     battleId, userId, intentType: "wants_to_join",
-  });
+  }).onConflictDoNothing();
 
-  const [battle] = await db.select().from(battlesTable).where(eq(battlesTable.id, battleId));
-  res.json({ ok: true, participantCount: battle.participantCount });
+  res.json({ ok: true, participantCount: updated.participantCount });
 });
 
 router.post("/:battleId/interest", async (req, res) => {
@@ -426,6 +507,47 @@ router.patch("/:battleId/status", async (req, res) => {
     .returning();
 
   res.json(updated);
+});
+
+router.post("/:battleId/bookmark", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const battleId = Number(req.params.battleId);
+  const userId = req.user.id;
+
+  const [existing] = await db.select().from(battleInterestTable)
+    .where(and(eq(battleInterestTable.battleId, battleId), eq(battleInterestTable.userId, userId), eq(battleInterestTable.intentType, "saved")));
+
+  if (existing) {
+    await db.delete(battleInterestTable).where(eq(battleInterestTable.id, existing.id));
+    res.json({ bookmarked: false });
+  } else {
+    await db.insert(battleInterestTable).values({ battleId, userId, intentType: "saved" });
+    res.json({ bookmarked: true });
+  }
+});
+
+router.get("/:battleId/invite-link", async (req, res) => {
+  const battleId = Number(req.params.battleId);
+  const [battle] = await db.select().from(battlesTable).where(eq(battlesTable.id, battleId));
+  if (!battle) {
+    res.status(404).json({ error: "Battle not found" });
+    return;
+  }
+
+  let inviteCode = battle.inviteCode;
+  if (!inviteCode) {
+    inviteCode = crypto.randomBytes(6).toString("base64url");
+    await db.update(battlesTable).set({ inviteCode }).where(eq(battlesTable.id, battleId));
+  }
+
+  const baseUrl = process.env.REPLIT_DOMAINS?.split(",")[0]
+    ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
+    : "https://platepair.replit.app";
+
+  res.json({ inviteCode, inviteUrl: `${baseUrl}/battles/${battleId}?invite=${inviteCode}` });
 });
 
 export default router;

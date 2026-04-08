@@ -32,6 +32,16 @@ export interface Battle {
   judgingEnd?: Date | null;
   participantCount: number;
   entryCount: number;
+  maxParticipants: number;
+  minParticipants: number;
+  /** Derived field maxParticipants - participantCount */
+  slotsOpen: number;
+  isHot: boolean;
+  isFeatured: boolean;
+  inviteCode?: string | null;
+  affinityTags: string[];
+  /** Whether the current user has bookmarked this battle */
+  isBookmarked?: boolean;
   coverImageUrl?: string | null;
   createdAt: Date;
 }

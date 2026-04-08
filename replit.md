@@ -189,6 +189,22 @@ Auth + Onboarding pages: `onboarding.tsx` (4-step wizard with tier selection), `
 - `generateAIDescription()` in create-battle.tsx auto-calls AI endpoint when hackId is present
 - AI Write (Sparkles) button available in Scratch and Confirm steps of battle creation flow
 
+**Battle Slot-Fill & Tournament Flow System:**
+- DB: `battles` table extended with `minParticipants`, `isHot`, `isFeatured`, `inviteCode`, `affinityTags`
+- DB: `battle_entries` extended with `judgeScore`, `timingScore`
+- API: GET `/battles` — now exposes `slotsOpen` (derived), `isHot`, `isFeatured`, `isBookmarked` per user, `maxParticipants`, `minParticipants`; orders hot/featured first
+- API: GET `/battles/hot` — battles with `isHot = true`, ordered by fill rate
+- API: GET `/battles/recommended` — open battles not yet full, ordered by featured/worthiness score
+- API: POST `/battles/:id/bookmark` — toggle bookmark (battle_interest "saved" intent); returns `{ bookmarked: bool }`
+- API: GET `/battles/:id/invite-link` — generates unique invite code + full invite URL; code stored in DB
+- Auto hot-marking: when a battle joins reach ≥50% fill rate with ≥4 participants, `isHot` flips to `true`
+- Battle size tiers enforced via `minParticipants`: 4 (private/quick), 8 (standard), 16 (featured/large)
+- Blended scoring model (7 dimensions): Completion 20%, Creativity 20%, Presentation 20%, Judge Score 20%, Timing 10%, Community votes 7%, Journal Bonus +0.5 pts
+- Timing score: 10 (on-time), 6 (≤30 min late), 2 (late) — computed on entry submission
+- UI: Battles page redesigned with "Hot Right Now" section at top (3 hot battles), slot progress bars on all cards, Hot/Featured/Almost-Full badges, "Closing Soon" filter tab, "Closes in Xh" countdown badges, bookmark button on each card
+- UI: Battle detail page shows: Hot/Featured labels, slot fill progress bar (color-coded: green/amber/red), "Save" + "Invite" action buttons, invite link display with copy button, "How Scoring Works" sidebar card explaining all 7 dimensions
+- UI: Entry leaderboard shows per-entry scoring breakdown (Completion, Creativity, Presentation mini-tiles) plus journal bonus indicator
+
 **Growth Event Tracking:**
 - DB table: `growth_events` (id, userId, sessionId, eventType, metadata JSONB, createdAt)
 - API: `POST /api/events` — fire-and-forget, returns 204, never throws at the user

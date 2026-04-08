@@ -19,6 +19,7 @@ import type {
 import type {
   AiHackReviewResult,
   AuthUserEnvelope,
+  Battle,
   BattleEntryWithUser,
   BattleSponsorship,
   BattleWithDetails,
@@ -39,9 +40,12 @@ import type {
   FeedSummary,
   GenerateBattleDescriptionBody,
   GenerateBattleDescriptionResponse,
+  GetBattleInviteLink200,
   GetBattleLeaderboardParams,
   GetFeedParams,
   GetFeedSummaryParams,
+  GetHotBattlesParams,
+  GetRecommendedBattlesParams,
   GetTrendingMealsParams,
   Group,
   GroupMember,
@@ -71,6 +75,7 @@ import type {
   SponsorBattleBody,
   SubmitEntryBody,
   SubmitHackForReviewBody,
+  ToggleBattleBookmark200,
   ToggleReactionBody,
   ToggleSaveBody,
   TrackBattleInterest201,
@@ -4697,6 +4702,379 @@ export const useJoinBattle = <
 > => {
   return useMutation(getJoinBattleMutationOptions(options));
 };
+
+/**
+ * @summary Toggle bookmark (save) a battle for the current user
+ */
+export const getToggleBattleBookmarkUrl = (battleId: number) => {
+  return `/api/battles/${battleId}/bookmark`;
+};
+
+export const toggleBattleBookmark = async (
+  battleId: number,
+  options?: RequestInit,
+): Promise<ToggleBattleBookmark200> => {
+  return customFetch<ToggleBattleBookmark200>(
+    getToggleBattleBookmarkUrl(battleId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getToggleBattleBookmarkMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof toggleBattleBookmark>>,
+    TError,
+    { battleId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof toggleBattleBookmark>>,
+  TError,
+  { battleId: number },
+  TContext
+> => {
+  const mutationKey = ["toggleBattleBookmark"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof toggleBattleBookmark>>,
+    { battleId: number }
+  > = (props) => {
+    const { battleId } = props ?? {};
+
+    return toggleBattleBookmark(battleId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ToggleBattleBookmarkMutationResult = NonNullable<
+  Awaited<ReturnType<typeof toggleBattleBookmark>>
+>;
+
+export type ToggleBattleBookmarkMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Toggle bookmark (save) a battle for the current user
+ */
+export const useToggleBattleBookmark = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof toggleBattleBookmark>>,
+    TError,
+    { battleId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof toggleBattleBookmark>>,
+  TError,
+  { battleId: number },
+  TContext
+> => {
+  return useMutation(getToggleBattleBookmarkMutationOptions(options));
+};
+
+/**
+ * @summary Get or generate an invite link for a battle
+ */
+export const getGetBattleInviteLinkUrl = (battleId: number) => {
+  return `/api/battles/${battleId}/invite-link`;
+};
+
+export const getBattleInviteLink = async (
+  battleId: number,
+  options?: RequestInit,
+): Promise<GetBattleInviteLink200> => {
+  return customFetch<GetBattleInviteLink200>(
+    getGetBattleInviteLinkUrl(battleId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetBattleInviteLinkQueryKey = (battleId: number) => {
+  return [`/api/battles/${battleId}/invite-link`] as const;
+};
+
+export const getGetBattleInviteLinkQueryOptions = <
+  TData = Awaited<ReturnType<typeof getBattleInviteLink>>,
+  TError = ErrorType<unknown>,
+>(
+  battleId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBattleInviteLink>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetBattleInviteLinkQueryKey(battleId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getBattleInviteLink>>
+  > = ({ signal }) =>
+    getBattleInviteLink(battleId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!battleId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getBattleInviteLink>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetBattleInviteLinkQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getBattleInviteLink>>
+>;
+export type GetBattleInviteLinkQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get or generate an invite link for a battle
+ */
+
+export function useGetBattleInviteLink<
+  TData = Awaited<ReturnType<typeof getBattleInviteLink>>,
+  TError = ErrorType<unknown>,
+>(
+  battleId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBattleInviteLink>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetBattleInviteLinkQueryOptions(battleId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get hot and trending battles
+ */
+export const getGetHotBattlesUrl = (params?: GetHotBattlesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/battles/hot?${stringifiedParams}`
+    : `/api/battles/hot`;
+};
+
+export const getHotBattles = async (
+  params?: GetHotBattlesParams,
+  options?: RequestInit,
+): Promise<Battle[]> => {
+  return customFetch<Battle[]>(getGetHotBattlesUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetHotBattlesQueryKey = (params?: GetHotBattlesParams) => {
+  return [`/api/battles/hot`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetHotBattlesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getHotBattles>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetHotBattlesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getHotBattles>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetHotBattlesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getHotBattles>>> = ({
+    signal,
+  }) => getHotBattles(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getHotBattles>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetHotBattlesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getHotBattles>>
+>;
+export type GetHotBattlesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get hot and trending battles
+ */
+
+export function useGetHotBattles<
+  TData = Awaited<ReturnType<typeof getHotBattles>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetHotBattlesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getHotBattles>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetHotBattlesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get battles recommended for the current user based on affinity
+ */
+export const getGetRecommendedBattlesUrl = (
+  params?: GetRecommendedBattlesParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/battles/recommended?${stringifiedParams}`
+    : `/api/battles/recommended`;
+};
+
+export const getRecommendedBattles = async (
+  params?: GetRecommendedBattlesParams,
+  options?: RequestInit,
+): Promise<Battle[]> => {
+  return customFetch<Battle[]>(getGetRecommendedBattlesUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetRecommendedBattlesQueryKey = (
+  params?: GetRecommendedBattlesParams,
+) => {
+  return [`/api/battles/recommended`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetRecommendedBattlesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRecommendedBattles>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetRecommendedBattlesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getRecommendedBattles>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetRecommendedBattlesQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getRecommendedBattles>>
+  > = ({ signal }) =>
+    getRecommendedBattles(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRecommendedBattles>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetRecommendedBattlesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getRecommendedBattles>>
+>;
+export type GetRecommendedBattlesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get battles recommended for the current user based on affinity
+ */
+
+export function useGetRecommendedBattles<
+  TData = Awaited<ReturnType<typeof getRecommendedBattles>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetRecommendedBattlesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getRecommendedBattles>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetRecommendedBattlesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Score a meal or video as a battle candidate

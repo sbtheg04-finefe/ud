@@ -21,6 +21,8 @@ export interface BattleEntry {
   completionScore: number;
   creativityScore: number;
   presentationScore: number;
+  judgeScore: number;
+  timingScore: number;
   peerVotes: number;
   totalScore: number;
   rank?: number | null;

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useParams, Link } from "wouter";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow, format, differenceInHours } from "date-fns";
 import { ImageUpload } from "@/components/shared/image-upload";
 import {
   useGetBattle,
@@ -8,6 +8,8 @@ import {
   useJoinBattle,
   useSubmitBattleEntry,
   useTrackBattleInterest,
+  useGetBattleInviteLink,
+  useToggleBattleBookmark,
   getGetBattleQueryKey,
   getListBattleEntriesQueryKey,
 } from "@workspace/api-client-react";
@@ -19,10 +21,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import {
   Swords, Flame, Clock, Users, Trophy, CheckCircle2, ChevronLeft,
   Camera, BookOpen, Utensils, Wrench, DollarSign, Timer, Star, Zap, ArrowRight,
-  Share2, ChevronRight
+  Share2, ChevronRight, TrendingUp, Bookmark, BookmarkCheck, Link2, Copy
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -62,9 +65,13 @@ export default function BattleDetail() {
   const [photoUrl, setPhotoUrl] = useState("");
   const [hasJoined, setHasJoined] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [showInviteLink, setShowInviteLink] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState<boolean | null>(null);
 
   const { data: battle, isLoading } = useGetBattle(id, { query: { enabled: !!id, queryKey: getGetBattleQueryKey(id) } });
   const { data: entries } = useListBattleEntries(id, { query: { enabled: !!id, queryKey: getListBattleEntriesQueryKey(id) } });
+  const { data: inviteData, refetch: fetchInvite } = useGetBattleInviteLink(id, { query: { enabled: false, queryKey: ["battle-invite", id] } });
+  const bookmarkMutation = useToggleBattleBookmark();
 
   const joinMutation = useJoinBattle({
     mutation: {
@@ -230,24 +237,110 @@ export default function BattleDetail() {
           <div className="md:col-span-2 space-y-6">
             
             {/* Stats bar */}
-            <div className="flex items-center gap-6 text-sm text-muted-foreground border-b pb-4">
-              <span className="flex items-center gap-1.5">
-                <Users size={14} className="text-primary" />
-                <strong className="text-foreground">{battle.participantCount}</strong> joined
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Trophy size={14} className="text-accent" />
-                <strong className="text-foreground">{battle.entryCount}</strong> entries
-              </span>
-              {battle.submissionDeadline && (
-                <span className="flex items-center gap-1.5">
-                  <Clock size={14} />
-                  Closes {formatDistanceToNow(new Date(battle.submissionDeadline), { addSuffix: true })}
-                </span>
+            <div className="space-y-3 border-b pb-4">
+              {/* Hot / Featured badges */}
+              {((battle as any).isHot || (battle as any).isFeatured) && (
+                <div className="flex items-center gap-2">
+                  {(battle as any).isHot && (
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-600 flex items-center gap-1">
+                      <TrendingUp size={11} /> Hot — filling fast
+                    </span>
+                  )}
+                  {(battle as any).isFeatured && (
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-600 flex items-center gap-1">
+                      <Star size={11} /> Featured
+                    </span>
+                  )}
+                </div>
               )}
-              <span className="ml-auto text-xs font-medium">
-                By {battle.creator?.displayName}
-              </span>
+
+              {/* Slot progress */}
+              {(() => {
+                const maxP = (battle as any).maxParticipants ?? 16;
+                const filled = battle.participantCount;
+                const slotsOpen = Math.max(0, maxP - filled);
+                const pct = Math.min(100, Math.round((filled / maxP) * 100));
+                const barColor = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-green-500";
+                return (
+                  <div>
+                    <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
+                      <span className="flex items-center gap-1">
+                        <Users size={12} className="text-primary" />
+                        <strong className="text-foreground">{filled}</strong> of {maxP} participants
+                      </span>
+                      <span className={slotsOpen <= 2 ? "text-red-500 font-semibold" : ""}>
+                        {slotsOpen} slot{slotsOpen !== 1 ? "s" : ""} open
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Secondary stats row */}
+              <div className="flex items-center gap-5 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <Trophy size={13} className="text-accent" />
+                  <strong className="text-foreground">{battle.entryCount}</strong> entries
+                </span>
+                {battle.submissionDeadline && (
+                  <span className="flex items-center gap-1.5">
+                    <Clock size={13} />
+                    Closes {formatDistanceToNow(new Date(battle.submissionDeadline), { addSuffix: true })}
+                  </span>
+                )}
+                <span className="ml-auto flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      if (!user) { toast({ title: "Sign in to bookmark battles" }); return; }
+                      const current = isBookmarked !== null ? isBookmarked : (battle as any).isBookmarked;
+                      bookmarkMutation.mutate({ battleId: id }, {
+                        onSuccess: (d) => {
+                          setIsBookmarked(d.bookmarked);
+                          toast({ title: d.bookmarked ? "Saved to your list!" : "Removed from saved" });
+                        }
+                      });
+                    }}
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {(isBookmarked !== null ? isBookmarked : (battle as any).isBookmarked) ? (
+                      <BookmarkCheck size={14} className="text-primary" />
+                    ) : (
+                      <Bookmark size={14} />
+                    )}
+                    Save
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const result = await fetchInvite();
+                      setShowInviteLink(true);
+                      if (result.data?.inviteUrl) {
+                        navigator.clipboard.writeText(result.data.inviteUrl);
+                        toast({ title: "Invite link copied!", description: "Share it to fill the remaining slots" });
+                      }
+                    }}
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <Link2 size={13} />
+                    Invite
+                  </button>
+                </span>
+              </div>
+
+              {/* Invite link display */}
+              {showInviteLink && inviteData?.inviteUrl && (
+                <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
+                  <span className="text-xs text-muted-foreground truncate flex-1">{inviteData.inviteUrl}</span>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(inviteData.inviteUrl); toast({ title: "Copied!" }); }}
+                    className="text-xs text-primary flex items-center gap-1 hover:underline shrink-0"
+                  >
+                    <Copy size={11} /> Copy
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Description */}
@@ -466,9 +559,27 @@ export default function BattleDetail() {
                             {entry.journalNote}
                           </p>
                         )}
-                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                          <span>Score: <strong className="text-foreground">{entry.totalScore.toFixed(1)}</strong></span>
-                          <span>{entry.peerVotes} votes</span>
+                        <div className="mt-2 space-y-1.5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">Total Score</span>
+                            <strong className="text-foreground text-sm">{entry.totalScore.toFixed(1)} / 10</strong>
+                          </div>
+                          <div className="grid grid-cols-3 gap-1.5 text-xs">
+                            {[
+                              { label: "Completion", val: (entry as any).completionScore ?? 0, max: 10 },
+                              { label: "Creativity", val: (entry as any).creativityScore ?? 0, max: 10 },
+                              { label: "Presentation", val: (entry as any).presentationScore ?? 0, max: 10 },
+                            ].map((s) => (
+                              <div key={s.label} className="bg-muted/60 rounded p-1.5 text-center">
+                                <div className="font-semibold text-foreground">{s.val.toFixed(1)}</div>
+                                <div className="text-muted-foreground text-[10px]">{s.label}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <span>{entry.peerVotes} community votes</span>
+                            {entry.journalNote && <span className="text-green-600">+Journal bonus</span>}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -553,6 +664,32 @@ export default function BattleDetail() {
                     <span className="font-medium text-xs">{format(new Date(battle.submissionDeadline), "MMM d")}</span>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Scoring model */}
+            <div className="border rounded-xl p-4 bg-card">
+              <p className="font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                <Trophy size={11} /> How Scoring Works
+              </p>
+              <div className="space-y-1.5 text-xs">
+                {[
+                  { label: "Completion", weight: "20%", desc: "Submitted with photo or video" },
+                  { label: "Creativity", weight: "20%", desc: "Originality + substitutions" },
+                  { label: "Presentation", weight: "20%", desc: "Photo quality" },
+                  { label: "Judge Score", weight: "20%", desc: "Expert review" },
+                  { label: "Timing", weight: "10%", desc: "Submitted before deadline" },
+                  { label: "Community", weight: "7%", desc: "Peer votes" },
+                  { label: "Journal Bonus", weight: "+0.5", desc: "Reflection note" },
+                ].map((row) => (
+                  <div key={row.label} className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="font-medium text-foreground">{row.label}</span>
+                      <span className="text-muted-foreground ml-1">— {row.desc}</span>
+                    </div>
+                    <span className="font-bold text-primary shrink-0">{row.weight}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
