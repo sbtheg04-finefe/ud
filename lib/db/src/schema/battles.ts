@@ -37,6 +37,7 @@ export const battlesTable = pgTable("battles", {
   sourcePlatform: text("source_platform"),
   sourceCreator: text("source_creator"),
   sourceThumbnailUrl: text("source_thumbnail_url"),
+  prepChecklist: text("prep_checklist").array().notNull().default([]),
   bracketData: jsonb("bracket_data"),
   maxParticipants: integer("max_participants").notNull().default(16),
   minParticipants: integer("min_participants").notNull().default(4),

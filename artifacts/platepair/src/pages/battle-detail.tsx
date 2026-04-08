@@ -25,7 +25,8 @@ import { Progress } from "@/components/ui/progress";
 import {
   Swords, Flame, Clock, Users, Trophy, CheckCircle2, ChevronLeft,
   Camera, BookOpen, Utensils, Wrench, DollarSign, Timer, Star, Zap, ArrowRight,
-  Share2, ChevronRight, TrendingUp, Bookmark, BookmarkCheck, Link2, Copy
+  Share2, ChevronRight, TrendingUp, Bookmark, BookmarkCheck, Link2, Copy,
+  Film, ExternalLink, Play, Award, BookMarked, CalendarCheck,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -49,6 +50,158 @@ const SCOPE_COLORS: Record<string, string> = {
 
 const DIFFICULTY_LABELS = ["", "Easy", "Medium", "Advanced", "Expert", "Master Chef"];
 const DIFFICULTY_COLORS = ["", "text-green-600", "text-amber-500", "text-orange-500", "text-red-500", "text-red-700"];
+
+const PLATFORM_LABELS: Record<string, { label: string; color: string; emoji: string }> = {
+  youtube: { label: "YouTube", color: "text-red-600 bg-red-50 border-red-200", emoji: "▶️" },
+  tiktok: { label: "TikTok", color: "text-gray-900 bg-gray-50 border-gray-200", emoji: "🎵" },
+  instagram: { label: "Instagram", color: "text-pink-600 bg-pink-50 border-pink-200", emoji: "📸" },
+  twitter: { label: "Twitter / X", color: "text-blue-500 bg-blue-50 border-blue-200", emoji: "🐦" },
+  pinterest: { label: "Pinterest", color: "text-red-700 bg-red-50 border-red-200", emoji: "📌" },
+  facebook: { label: "Facebook", color: "text-blue-700 bg-blue-50 border-blue-200", emoji: "👥" },
+  web: { label: "Web", color: "text-gray-600 bg-gray-50 border-gray-200", emoji: "🌐" },
+};
+
+function extractYouTubeId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes("youtu.be")) return u.pathname.slice(1);
+    if (u.hostname.includes("youtube.com")) return u.searchParams.get("v");
+  } catch {}
+  return null;
+}
+
+function FoundFootageCard({ battle }: { battle: any }) {
+  const platform = battle.sourcePlatform || "web";
+  const pInfo = PLATFORM_LABELS[platform] || PLATFORM_LABELS.web;
+  const ytId = platform === "youtube" && battle.sourceUrl ? extractYouTubeId(battle.sourceUrl) : null;
+  const thumbnail = battle.sourceThumbnailUrl || battle.sourceMeal?.imageUrl || battle.sourceVideo?.thumbnailUrl;
+  const sourceTitle = battle.sourceMeal?.title || battle.sourceVideo?.title || null;
+  const creator = battle.sourceCreator;
+  const sourceUrl = battle.sourceUrl;
+
+  if (!sourceUrl && !battle.sourceMeal && !battle.sourceVideo) return null;
+
+  return (
+    <div className="rounded-2xl border bg-card overflow-hidden">
+      <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+        <Film size={15} className="text-primary" />
+        <span className="font-semibold text-sm">Found Footage — Battle Source</span>
+        {creator && (
+          <span className={`ml-auto text-xs font-medium px-2.5 py-0.5 rounded-full border ${pInfo.color}`}>
+            {pInfo.emoji} {creator}
+          </span>
+        )}
+      </div>
+
+      {/* YouTube embed */}
+      {ytId ? (
+        <div className="relative w-full aspect-video bg-black">
+          <iframe
+            src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`}
+            title="Battle source video"
+            className="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      ) : thumbnail ? (
+        <div className="relative w-full aspect-video bg-black overflow-hidden group">
+          <img src={thumbnail} alt="Source thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
+              <Play size={28} className="text-white ml-1" fill="white" />
+            </div>
+          </div>
+          {sourceUrl && (
+            <a
+              href={sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute inset-0"
+              aria-label={`Watch on ${pInfo.label}`}
+            />
+          )}
+        </div>
+      ) : null}
+
+      <div className="p-4 space-y-2">
+        <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Inspired by</p>
+        <p className="font-semibold">{sourceTitle || (creator ? `${creator}'s ${pInfo.label} post` : `${pInfo.label} original`)}</p>
+        {sourceUrl && (
+          <a
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
+          >
+            <ExternalLink size={11} />
+            Watch the original on {pInfo.label}
+          </a>
+        )}
+        {battle.sourceMeal && !sourceUrl && (
+          <Link href={`/meals/${battle.sourceMeal.id}`}>
+            <Button size="sm" variant="link" className="p-0 h-auto text-xs gap-1">
+              View original PlatePair meal <ArrowRight size={10} />
+            </Button>
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PrepChecklistCard({ steps }: { steps: string[] }) {
+  if (!steps || steps.length === 0) return null;
+  return (
+    <div className="rounded-2xl border bg-card p-5 space-y-3">
+      <h3 className="font-serif font-bold text-lg flex items-center gap-2">
+        <CalendarCheck size={18} className="text-green-500" />
+        Prep Checklist
+        <span className="text-xs font-normal text-muted-foreground ml-1">— from source</span>
+      </h3>
+      <ol className="space-y-2">
+        {steps.map((step, i) => (
+          <li key={i} className="flex items-start gap-3 text-sm">
+            <span className="flex-shrink-0 w-5 h-5 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center text-xs font-bold text-muted-foreground mt-0.5">
+              {i + 1}
+            </span>
+            <span>{step}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function MonetizationPathCard() {
+  return (
+    <div className="border rounded-xl p-4 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+      <p className="font-semibold text-xs text-amber-800 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+        <Award size={11} /> What Winning Unlocks
+      </p>
+      <div className="space-y-2.5 text-xs">
+        {[
+          { step: "Win battles", result: "Earn Authority Score", icon: Trophy },
+          { step: "Build authority", result: "Unlock cookbook selling", icon: BookMarked },
+          { step: "Top performers", result: "Free booking page (LatePoint)", icon: CalendarCheck },
+        ].map(({ step, result, icon: Icon }, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0">
+              <Icon size={11} className="text-amber-800" />
+            </div>
+            <div>
+              <span className="font-medium text-amber-900">{step}</span>
+              <span className="text-amber-700 ml-1">→ {result}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-[10px] text-amber-600 mt-3 border-t border-amber-200 pt-2">
+        Battle wins build your food authority and open monetization paths — cookbooks, classes, and more.
+      </p>
+    </div>
+  );
+}
 
 export default function BattleDetail() {
   const { battleId } = useParams();
@@ -348,28 +501,12 @@ export default function BattleDetail() {
               <p className="text-muted-foreground leading-relaxed">{battle.description}</p>
             )}
 
-            {/* Source content link */}
-            {(battle.sourceMeal || battle.sourceVideo) && (
-              <div className="border rounded-xl p-4 bg-card flex items-center gap-4">
-                {(battle.sourceMeal?.imageUrl || battle.sourceVideo?.thumbnailUrl) && (
-                  <img
-                    src={battle.sourceMeal?.imageUrl || battle.sourceVideo?.thumbnailUrl || ""}
-                    className="w-20 h-16 rounded-lg object-cover flex-shrink-0"
-                    alt="Source"
-                  />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground mb-1">Challenge based on</p>
-                  <p className="font-semibold truncate">{battle.sourceMeal?.title || battle.sourceVideo?.title}</p>
-                  {battle.sourceMeal && (
-                    <Link href={`/meals/${battle.sourceMeal.id}`}>
-                      <Button size="sm" variant="link" className="p-0 h-auto text-xs gap-1">
-                        View original meal <ArrowRight size={10} />
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              </div>
+            {/* Found Footage Source Card */}
+            <FoundFootageCard battle={battle} />
+
+            {/* Source-extracted Prep Checklist */}
+            {(battle as any).prepChecklist?.length > 0 && (
+              <PrepChecklistCard steps={(battle as any).prepChecklist} />
             )}
 
             {/* Prep checklist */}
@@ -712,6 +849,9 @@ export default function BattleDetail() {
                 </div>
               </div>
             )}
+
+            {/* Winner monetization paths */}
+            <MonetizationPathCard />
 
             {/* Share */}
             <Button

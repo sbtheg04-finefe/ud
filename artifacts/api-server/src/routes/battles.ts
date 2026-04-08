@@ -241,6 +241,7 @@ router.post("/", async (req, res) => {
     sourceMealId: sourceMealId || null, sourceVideoId: sourceVideoId || null,
     sourceUrl: sourceUrl || null, sourcePlatform: sourcePlatform || null,
     sourceCreator: sourceCreator || null, sourceThumbnailUrl: sourceThumbnailUrl || null,
+    prepChecklist: Array.isArray(req.body.prepChecklist) ? req.body.prepChecklist : [],
     challengeType, scopeType, groupId: groupId || null, createdBy, maxTeamSize,
     coverImageUrl: coverImg, battleWorthinessScore: score,
     slug: slugify(title),

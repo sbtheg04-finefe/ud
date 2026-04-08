@@ -62,6 +62,10 @@ type BattleItem = {
   isBookmarked?: boolean;
   registrationEnd?: string | null;
   submissionDeadline?: string | null;
+  sourceUrl?: string | null;
+  sourcePlatform?: string | null;
+  sourceCreator?: string | null;
+  sourceThumbnailUrl?: string | null;
 };
 
 function SlotProgress({ filled, total }: { filled: number; total: number }) {
@@ -256,6 +260,14 @@ function BattleCard({ battle, onBookmark }: { battle: BattleItem; onBookmark?: (
         <h3 className="font-serif font-bold text-lg mb-1 line-clamp-1 group-hover:text-primary transition-colors">
           {battle.title}
         </h3>
+        {battle.sourceCreator && battle.sourcePlatform && (
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="text-xs text-muted-foreground">Inspired by</span>
+            <span className="text-xs font-semibold text-foreground">{battle.sourceCreator}</span>
+            <span className="text-xs text-muted-foreground">on</span>
+            <span className="text-xs font-medium capitalize">{battle.sourcePlatform}</span>
+          </div>
+        )}
         {battle.description && (
           <p className="text-muted-foreground text-sm line-clamp-2 mb-3">{battle.description}</p>
         )}

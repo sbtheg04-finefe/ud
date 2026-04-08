@@ -189,6 +189,18 @@ Auth + Onboarding pages: `onboarding.tsx` (4-step wizard with tier selection), `
 - `generateAIDescription()` in create-battle.tsx auto-calls AI endpoint when hackId is present
 - AI Write (Sparkles) button available in Scratch and Confirm steps of battle creation flow
 
+**"Found Footage" Battle Source System:**
+- DB: `battles.prepChecklist` (text[]) — ordered prep steps extracted from source content
+- DB: `battles.sourceUrl`, `sourcePlatform`, `sourceCreator`, `sourceThumbnailUrl` — already existed; now fully wired to UI
+- API: POST `/battles` accepts `prepChecklist` array and persists it
+- UI (battle detail): `FoundFootageCard` component — shows "Found Footage — Battle Source" header with platform badge (emoji + creator handle); YouTube sources get live iframe embed; TikTok/Instagram/others get thumbnail + play overlay + "Watch on [Platform]" link
+- UI (battle detail): `PrepChecklistCard` — numbered step-by-step checklist from source content, shown between description and requirements prep
+- UI (battle detail): `MonetizationPathCard` sidebar — "What Winning Unlocks" amber card showing: Win Battles → Earn Authority Score → Unlock Cookbook Selling → Top Performers get LatePoint booking page
+- UI (battle cards): "Inspired by @creator on Platform" attribution line under battle title on every card that has a source creator
+- Seed data: 3 hot battles updated with real source URLs (YouTube/Instagram/TikTok), creators, and 5-step prep checklists
+- `extractYouTubeId()` helper extracts video ID from `youtube.com/watch?v=ID` or `youtu.be/ID` URLs for iframe embedding
+- Platform registry (`PLATFORM_LABELS`) covers YouTube, TikTok, Instagram, Twitter, Pinterest, Facebook, Web with branded colors
+
 **Battle Slot-Fill & Tournament Flow System:**
 - DB: `battles` table extended with `minParticipants`, `isHot`, `isFeatured`, `inviteCode`, `affinityTags`
 - DB: `battle_entries` extended with `judgeScore`, `timingScore`
