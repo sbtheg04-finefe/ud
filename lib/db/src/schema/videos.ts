@@ -30,6 +30,10 @@ export const videosTable = pgTable("videos", {
   aiReviewedAt: timestamp("ai_reviewed_at", { withTimezone: true }),
   approvedAt: timestamp("approved_at", { withTimezone: true }),
   creativeEngagementScore: integer("creative_engagement_score").notNull().default(0),
+  ingredients: text("ingredients").array().notNull().default([]),
+  battleScore: numeric("battle_score", { precision: 4, scale: 2 }),
+  populatedAt: timestamp("populated_at", { withTimezone: true }),
+  isDemo: integer("is_demo").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

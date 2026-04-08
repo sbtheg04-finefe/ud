@@ -186,6 +186,23 @@ function HackCard({ video, currentUserId, onBattleThis }: { video: any; currentU
           </div>
         )}
 
+        {/* Ingredients chips */}
+        {video.ingredients && video.ingredients.length > 0 && (
+          <div className="mb-3">
+            <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide mb-1.5">Key ingredients</p>
+            <div className="flex flex-wrap gap-1">
+              {(video.ingredients as string[]).slice(0, 5).map((ing: string, i: number) => (
+                <span key={i} className="text-[10px] bg-orange-50 border border-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
+                  {ing.split(" ").slice(-1)[0]}
+                </span>
+              ))}
+              {video.ingredients.length > 5 && (
+                <span className="text-[10px] text-muted-foreground px-1 py-0.5">+{video.ingredients.length - 5} more</span>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Source URL */}
         {video.sourceUrl && (
           <a
@@ -360,6 +377,106 @@ function ApprovedTopRow({ videos }: { videos: any[] }) {
             </Link>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function CronStatusPanel({ onPopulate }: { onPopulate: () => void }) {
+  const [status, setStatus] = useState<any>(null);
+  const [populating, setPopulating] = useState(false);
+  const [showPanel, setShowPanel] = useState(false);
+
+  const fetchStatus = async () => {
+    try {
+      const res = await fetch("/api/hacks/cron-status");
+      const data = await res.json();
+      setStatus(data);
+      setShowPanel(true);
+    } catch (_) {}
+  };
+
+  const handlePopulate = async () => {
+    setPopulating(true);
+    try {
+      const res = await fetch("/api/hacks/populate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ count: 20 }),
+      });
+      const data = await res.json();
+      setStatus((prev: any) => ({ ...prev, lastRun: data }));
+      onPopulate();
+    } catch (_) {} finally {
+      setPopulating(false);
+    }
+  };
+
+  if (!showPanel) {
+    return (
+      <div className="text-center">
+        <button
+          onClick={fetchStatus}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+        >
+          View content pipeline status
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-muted/30 border rounded-2xl p-5 text-sm">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <RefreshCw size={15} className="text-primary" />
+          <span className="font-semibold">Daily Hack Pipeline</span>
+          <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">AUTO</span>
+        </div>
+        <button onClick={() => setShowPanel(false)} className="text-muted-foreground hover:text-foreground">
+          <X size={14} />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        {[
+          { label: "Total Hacks", value: status?.stats?.total ?? "–", color: "text-foreground" },
+          { label: "Auto-Generated", value: status?.stats?.demo ?? "–", color: "text-blue-600" },
+          { label: "User Submitted", value: status?.stats?.userSubmitted ?? "–", color: "text-orange-600" },
+          { label: "AI Approved", value: status?.stats?.approved ?? "–", color: "text-green-600" },
+        ].map(s => (
+          <div key={s.label} className="bg-background border rounded-xl p-3 text-center">
+            <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+            <p className="text-[11px] text-muted-foreground">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="flex-1 space-y-1">
+          {status?.lastRun && (
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">Last run:</span>{" "}
+              {new Date(status.lastRun.ranAt).toLocaleString()} — +{status.lastRun.inserted} hacks from {status.lastRun.categories?.join(", ")}
+            </p>
+          )}
+          {status?.nextScheduledRun && (
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">Next auto-run:</span>{" "}
+              {new Date(status.nextScheduledRun).toLocaleString()} (6AM ET daily)
+            </p>
+          )}
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handlePopulate}
+          disabled={populating}
+          className="gap-2 shrink-0 rounded-full"
+        >
+          {populating ? <RefreshCw size={13} className="animate-spin" /> : <Zap size={13} />}
+          {populating ? "Fetching..." : "Fetch Now (20 hacks)"}
+        </Button>
       </div>
     </div>
   );
@@ -748,17 +865,22 @@ export default function Videos() {
 
         {/* Bottom CTA */}
         {filtered && filtered.length > 0 && (
-          <div className="mt-12 text-center">
-            <div className="inline-flex flex-col items-center gap-3 p-6 bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl border border-orange-100">
-              <p className="font-serif font-bold">Found something great while doomscrolling?</p>
-              <p className="text-sm text-muted-foreground">Drop the hack — turn recipe scrolling into battle fuel.</p>
-              <Button
-                onClick={() => { setShowForm(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                className="rounded-full gap-2 bg-orange-500 hover:bg-orange-600 text-white"
-              >
-                <Plus size={15} /> Drop a Hack
-              </Button>
+          <div className="mt-12 space-y-6">
+            <div className="text-center">
+              <div className="inline-flex flex-col items-center gap-3 p-6 bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl border border-orange-100">
+                <p className="font-serif font-bold">Found something great while doomscrolling?</p>
+                <p className="text-sm text-muted-foreground">Drop the hack — turn recipe scrolling into battle fuel.</p>
+                <Button
+                  onClick={() => { setShowForm(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  className="rounded-full gap-2 bg-orange-500 hover:bg-orange-600 text-white"
+                >
+                  <Plus size={15} /> Drop a Hack
+                </Button>
+              </div>
             </div>
+
+            {/* Cron Status Panel */}
+            <CronStatusPanel onPopulate={() => queryClient.invalidateQueries({ queryKey: ["listVideos"] })} />
           </div>
         )}
       </main>
