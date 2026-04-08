@@ -7,3 +7,4 @@ export * from "./engagement";
 export * from "./battles";
 export * from "./profiles";
 export * from "./events";
+export * from "./social";

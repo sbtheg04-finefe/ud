@@ -250,6 +250,24 @@ export default function BattleDetail() {
     }
   }
 
+  async function copyInviteLink() {
+    const baseUrl = window.location.origin;
+    const inviteUrl = inviteData?.inviteCode
+      ? `${baseUrl}/battles/${id}?ref=${inviteData.inviteCode}`
+      : window.location.href;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      toast({ title: "Invite link copied! 🎉", description: "Share it with friends — first 10 joiners get bonus entries." });
+    } catch {
+      toast({ title: "Could not copy", variant: "destructive" });
+    }
+  }
+
+  async function handleGetInvite() {
+    await fetchInvite();
+    setShowInviteLink(true);
+  }
+
   const STATUS_TRANSITIONS: Record<string, { label: string; next: string }[]> = {
     draft: [{ label: "Open for Registrations", next: "open" }],
     open: [{ label: "Go Live", next: "live" }, { label: "Archive", next: "archived" }],
@@ -664,8 +682,15 @@ export default function BattleDetail() {
                   Battle Entries ({entries.length})
                 </h3>
                 <div className="space-y-3">
-                  {entries.map((entry, i) => (
-                    <div key={entry.id} className="border rounded-xl p-4 bg-card flex gap-4">
+                  {entries.map((entry, i) => {
+                    const isWinner = i === 0 && (battle.battleStatus === "completed" || battle.battleStatus === "judging");
+                    return (
+                    <div key={entry.id} className={`border rounded-xl p-4 bg-card flex gap-4 relative overflow-hidden ${isWinner ? "border-yellow-300 bg-gradient-to-br from-yellow-50 to-amber-50" : ""}`}>
+                      {isWinner && (
+                        <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-1 rounded-bl-lg flex items-center gap-1">
+                          🏆 WINNER
+                        </div>
+                      )}
                       {entry.photoUrl && (
                         <img
                           src={entry.photoUrl.startsWith("/objects/") ? `/api/storage${entry.photoUrl}` : entry.photoUrl}
@@ -676,10 +701,12 @@ export default function BattleDetail() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           {i === 0 && (
-                            <span className="text-xs font-bold text-yellow-600 flex items-center gap-1">
-                              <Trophy size={10} /> #1
+                            <span className={`text-xs font-bold flex items-center gap-1 ${isWinner ? "text-yellow-600" : "text-yellow-600"}`}>
+                              <Trophy size={10} /> {isWinner ? "🥇 Champion" : "#1"}
                             </span>
                           )}
+                          {i === 1 && <span className="text-xs font-bold text-slate-500 flex items-center gap-1"><Trophy size={10} /> 🥈 Runner-up</span>}
+                          {i === 2 && <span className="text-xs font-bold text-amber-700 flex items-center gap-1"><Trophy size={10} /> 🥉 3rd Place</span>}
                           <Avatar className="h-6 w-6">
                             <AvatarImage src={entry.user?.avatarUrl || undefined} />
                             <AvatarFallback className="text-xs">{entry.user?.displayName?.charAt(0)}</AvatarFallback>
@@ -720,7 +747,8 @@ export default function BattleDetail() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </div>
             )}
@@ -853,14 +881,44 @@ export default function BattleDetail() {
             {/* Winner monetization paths */}
             <MonetizationPathCard />
 
-            {/* Share */}
-            <Button
-              variant="outline"
-              className="w-full gap-2"
-              onClick={handleShare}
-            >
-              <Share2 size={14} /> Share Battle
-            </Button>
+            {/* Invite Friends Panel */}
+            <div className="border rounded-xl bg-gradient-to-br from-primary/5 to-amber-50 border-primary/20 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Share2 size={15} className="text-primary" />
+                <p className="font-semibold text-sm">Invite Friends to Cook</p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Share your invite link — first 10 joiners unlock bonus entries and you earn points when they join!
+              </p>
+              {showInviteLink && inviteData?.inviteCode ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 bg-background rounded-lg border px-3 py-2">
+                    <span className="text-xs text-muted-foreground flex-1 truncate">
+                      {window.location.origin}/battles/{id}?ref={inviteData.inviteCode}
+                    </span>
+                    <button onClick={copyInviteLink} className="shrink-0 text-primary hover:text-primary/80">
+                      <Copy size={14} />
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="flex-1 text-xs gap-1.5" onClick={copyInviteLink}>
+                      <Copy size={12} /> Copy Link
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1 text-xs gap-1.5" onClick={handleShare}>
+                      <Share2 size={12} /> Share
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  className="w-full rounded-full gap-2 text-sm"
+                  size="sm"
+                  onClick={handleGetInvite}
+                >
+                  <Link2 size={13} /> Get Invite Link
+                </Button>
+              )}
+            </div>
 
             {/* Creator Status Management */}
             {user && battle.createdBy === user.id && (() => {

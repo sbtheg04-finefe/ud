@@ -39,6 +39,18 @@ function useWeeklyPoints() {
   return { data, loading };
 }
 
+function useLeaderboard() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    fetch("/api/points/leaderboard", { credentials: "include" })
+      .then(r => r.json())
+      .then(d => { setData(Array.isArray(d) ? d : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+  return { data, loading };
+}
+
 function useMyBattles() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -210,6 +222,7 @@ export default function Dashboard() {
   const { data: points, loading: pointsLoading } = useWeeklyPoints();
   const { data: battles, loading: battlesLoading } = useMyBattles();
   const { data: notifications, unread } = useNotifications();
+  const { data: leaderboard, loading: leaderboardLoading } = useLeaderboard();
 
   const [, navigate] = useLocation();
 
@@ -322,6 +335,38 @@ export default function Dashboard() {
                 <div className="space-y-3">
                   {activeBattles.slice(0, 6).map(b => (
                     <BattleStatusCard key={b.id} battle={b} userId={user.id} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Weekly leaderboard */}
+            <div className="border rounded-2xl p-5 bg-card">
+              <p className="font-semibold text-sm uppercase tracking-wide text-muted-foreground mb-3 flex items-center gap-1.5">
+                <Trophy size={13} /> Weekly Leaderboard
+              </p>
+              {leaderboardLoading ? (
+                <div className="space-y-2">
+                  {[1,2,3].map(i => <Skeleton key={i} className="h-9 rounded-lg" />)}
+                </div>
+              ) : leaderboard.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">No points earned yet this week. Be the first!</p>
+              ) : (
+                <div className="space-y-2">
+                  {leaderboard.map((u: any, i: number) => (
+                    <div key={u.id} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/40 transition-colors">
+                      <span className="text-base w-5 text-center shrink-0">
+                        {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`}
+                      </span>
+                      <Avatar className="h-7 w-7 shrink-0">
+                        <AvatarImage src={u.avatar_url || undefined} />
+                        <AvatarFallback className="text-xs">{u.display_name?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm flex-1 truncate">{u.display_name}</span>
+                      <span className={`text-xs font-bold ${i === 0 ? "text-yellow-600" : "text-primary"}`}>
+                        {u.total_points} pts
+                      </span>
+                    </div>
                   ))}
                 </div>
               )}
