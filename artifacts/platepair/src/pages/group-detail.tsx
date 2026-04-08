@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, Link } from "wouter";
 import {
   useGetGroup, useGetGroupStats, useListGroupMembers, useGetFeed,
@@ -6,17 +7,50 @@ import {
 import { Navbar } from "@/components/layout/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FeedItemCard } from "@/components/shared/feed-item-card";
-import { Users, Globe, Lock, ShieldCheck, MapPin } from "lucide-react";
+import { Users, Globe, Lock, ShieldCheck, MapPin, UserPlus, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function GroupDetail() {
   const { groupId } = useParams();
   const id = Number(groupId);
+  const { data: currentUser } = useCurrentUser();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isJoining, setIsJoining] = useState(false);
 
   const { data: group, isLoading: isLoadingGroup } = useGetGroup(id, { query: { enabled: !!id, queryKey: getGetGroupQueryKey(id) } });
   const { data: stats, isLoading: isLoadingStats } = useGetGroupStats(id, { query: { enabled: !!id, queryKey: getGetGroupStatsQueryKey(id) } });
   const { data: members, isLoading: isLoadingMembers } = useListGroupMembers(id, { query: { enabled: !!id, queryKey: getListGroupMembersQueryKey(id) } });
+
+  const isMember = members?.some(m => m.user?.id === currentUser?.id);
+
+  async function joinGroup() {
+    if (!currentUser) {
+      toast({ title: "Sign in to join groups", variant: "destructive" });
+      return;
+    }
+    setIsJoining(true);
+    try {
+      const res = await fetch(`/api/groups/${id}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ userId: currentUser.id, role: "member" }),
+      });
+      if (!res.ok) throw new Error();
+      await queryClient.invalidateQueries({ queryKey: getListGroupMembersQueryKey(id) });
+      await queryClient.invalidateQueries({ queryKey: getGetGroupQueryKey(id) });
+      toast({ title: "Joined!", description: `Welcome to ${group?.name}` });
+    } catch {
+      toast({ title: "Failed to join group", variant: "destructive" });
+    } finally {
+      setIsJoining(false);
+    }
+  }
   const feedParams = { groupId: id };
   const { data: feedData, isLoading: isLoadingFeed } = useGetFeed(feedParams, { query: { enabled: !!id, queryKey: getGetFeedQueryKey(feedParams) } });
 
@@ -66,7 +100,16 @@ export default function GroupDetail() {
                     </div>
                   )}
                 </div>
-                <Button>Join Group</Button>
+                {isMember ? (
+                  <Button variant="outline" disabled className="gap-2 text-green-700 border-green-200">
+                    <CheckCircle2 size={16} /> Joined
+                  </Button>
+                ) : (
+                  <Button onClick={joinGroup} disabled={isJoining} className="gap-2">
+                    <UserPlus size={16} />
+                    {isJoining ? "Joining…" : "Join Group"}
+                  </Button>
+                )}
               </div>
               
               {isLoadingGroup ? (

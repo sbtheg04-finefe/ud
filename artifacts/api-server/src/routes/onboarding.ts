@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db, usersTable, partnerProfilesTable, judgeProfilesTable } from "@workspace/db";
+import { groupsTable, groupMembershipsTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { getSessionId, getSession, updateSession } from "../lib/auth";
 
@@ -54,6 +55,26 @@ router.post("/onboarding/complete", async (req, res) => {
       await db.update(usersTable)
         .set({ referredById: referrer.id })
         .where(eq(usersTable.id, userId));
+
+      const [referrerGroup] = await db.select({ id: groupsTable.id })
+        .from(groupMembershipsTable)
+        .innerJoin(groupsTable, eq(groupMembershipsTable.groupId, groupsTable.id))
+        .where(eq(groupMembershipsTable.userId, referrer.id))
+        .limit(1);
+
+      if (referrerGroup) {
+        const existing = await db.select({ id: groupMembershipsTable.id })
+          .from(groupMembershipsTable)
+          .where(eq(groupMembershipsTable.userId, userId))
+          .limit(1);
+        if (existing.length === 0) {
+          await db.insert(groupMembershipsTable).values({
+            userId,
+            groupId: referrerGroup.id,
+            role: "member",
+          }).onConflictDoNothing();
+        }
+      }
     }
   }
 

@@ -3,8 +3,9 @@ import { useListGroups, getListGroupsQueryKey } from "@workspace/api-client-reac
 import { Navbar } from "@/components/layout/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Users, Globe, Lock } from "lucide-react";
+import { Users, Globe, Lock, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default function Groups() {
   const { data: groups, isLoading } = useListGroups({ query: { enabled: true, queryKey: getListGroupsQueryKey() } });
@@ -18,6 +19,11 @@ export default function Groups() {
             <h1 className="text-3xl font-serif font-bold mb-2 text-primary">Discover Groups</h1>
             <p className="text-muted-foreground">Find your cooking circle—neighborhoods, families, or teams.</p>
           </div>
+          <Link href="/groups/create">
+            <Button className="gap-2 rounded-full shadow-sm">
+              <Plus size={16} /> Start a Circle
+            </Button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -21,6 +21,8 @@ import CreateBattle from "@/pages/create-battle";
 import Onboarding from "@/pages/onboarding";
 import PartnerDashboard from "@/pages/partner-dashboard";
 import JudgeQueue from "@/pages/judge-queue";
+import JudgeScore from "@/pages/judge-score";
+import CreateGroup from "@/pages/create-group";
 import LoginPage from "@/pages/login";
 
 const queryClient = new QueryClient();
@@ -82,6 +84,8 @@ function Router() {
         <Route path="/battles/:battleId" component={BattleDetail} />
         <Route path="/videos" component={Videos} />
         <Route path="/groups" component={Groups} />
+        {/* /groups/create must come BEFORE /groups/:groupId */}
+        <Route path="/groups/create">{() => <ProtectedRoute component={CreateGroup} />}</Route>
         <Route path="/groups/:groupId" component={GroupDetail} />
         <Route path="/meals/:mealId" component={MealDetail} />
         <Route path="/profile/:userId" component={Profile} />
@@ -92,6 +96,7 @@ function Router() {
         <Route path="/saved">{() => <ProtectedRoute component={SavedItems} />}</Route>
         <Route path="/partner/dashboard">{() => <ProtectedRoute component={PartnerDashboard} />}</Route>
         <Route path="/judge/queue">{() => <ProtectedRoute component={JudgeQueue} />}</Route>
+        <Route path="/judge/score/:battleId/:assignmentId">{() => <ProtectedRoute component={JudgeScore} />}</Route>
 
         <Route component={NotFound} />
       </Switch>

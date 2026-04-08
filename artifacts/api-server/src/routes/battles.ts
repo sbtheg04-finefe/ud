@@ -388,4 +388,44 @@ router.post("/:battleId/interest", async (req, res) => {
   res.status(201).json({ ok: true });
 });
 
+const STATUS_TRANSITIONS: Record<string, string[]> = {
+  draft: ["open"],
+  open: ["live", "archived"],
+  live: ["judging", "archived"],
+  judging: ["completed", "archived"],
+  completed: [],
+  archived: [],
+};
+
+router.patch("/:battleId/status", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const battleId = Number(req.params.battleId);
+  const { status } = req.body as { status: string };
+
+  const [battle] = await db.select().from(battlesTable).where(eq(battlesTable.id, battleId));
+  if (!battle) {
+    res.status(404).json({ error: "Battle not found" });
+    return;
+  }
+  if (battle.createdBy !== req.user.id) {
+    res.status(403).json({ error: "Only the battle creator can change status" });
+    return;
+  }
+  const allowed = STATUS_TRANSITIONS[battle.battleStatus] ?? [];
+  if (!allowed.includes(status)) {
+    res.status(400).json({ error: `Cannot transition from ${battle.battleStatus} to ${status}` });
+    return;
+  }
+
+  const [updated] = await db.update(battlesTable)
+    .set({ battleStatus: status as typeof battle.battleStatus })
+    .where(eq(battlesTable.id, battleId))
+    .returning();
+
+  res.json(updated);
+});
+
 export default router;

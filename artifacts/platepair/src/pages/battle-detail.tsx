@@ -21,8 +21,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import {
   Swords, Flame, Clock, Users, Trophy, CheckCircle2, ChevronLeft,
-  Camera, BookOpen, Utensils, Wrench, DollarSign, Timer, Star, Zap, ArrowRight
+  Camera, BookOpen, Utensils, Wrench, DollarSign, Timer, Star, Zap, ArrowRight,
+  Share2, ChevronRight
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const CHALLENGE_LABELS: Record<string, string> = {
   solo_remake: "Solo Remake",
@@ -50,8 +52,10 @@ export default function BattleDetail() {
   const id = Number(battleId);
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const [showSubmit, setShowSubmit] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState(false);
   const [showPrep, setShowPrep] = useState(false);
   const [caption, setCaption] = useState("");
   const [journalNote, setJournalNote] = useState("");
@@ -70,6 +74,49 @@ export default function BattleDetail() {
       }
     }
   });
+
+  async function handleShare() {
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: battle?.title, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast({ title: "Link copied!", description: "Battle link copied to clipboard." });
+      }
+    } catch {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Link copied!", description: "Battle link copied to clipboard." });
+    }
+  }
+
+  const STATUS_TRANSITIONS: Record<string, { label: string; next: string }[]> = {
+    draft: [{ label: "Open for Registrations", next: "open" }],
+    open: [{ label: "Go Live", next: "live" }, { label: "Archive", next: "archived" }],
+    live: [{ label: "Move to Judging", next: "judging" }, { label: "Archive", next: "archived" }],
+    judging: [{ label: "Mark Completed", next: "completed" }],
+    completed: [],
+    archived: [],
+  };
+
+  async function updateStatus(nextStatus: string) {
+    setStatusUpdating(true);
+    try {
+      const res = await fetch(`/api/battles/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!res.ok) throw new Error();
+      await queryClient.invalidateQueries({ queryKey: getGetBattleQueryKey(id) });
+      toast({ title: "Status updated", description: `Battle is now ${nextStatus}.` });
+    } catch {
+      toast({ title: "Failed to update status", variant: "destructive" });
+    } finally {
+      setStatusUpdating(false);
+    }
+  }
 
   const submitMutation = useSubmitBattleEntry({
     mutation: {
@@ -526,6 +573,39 @@ export default function BattleDetail() {
                 </div>
               </div>
             )}
+
+            {/* Share */}
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleShare}
+            >
+              <Share2 size={14} /> Share Battle
+            </Button>
+
+            {/* Creator Status Management */}
+            {user && battle.createdBy === user.id && (() => {
+              const transitions = STATUS_TRANSITIONS[battle.battleStatus] ?? [];
+              if (transitions.length === 0) return null;
+              return (
+                <div className="border rounded-xl p-4 bg-amber-50 border-amber-200 space-y-2">
+                  <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide">Creator Controls</p>
+                  <p className="text-xs text-amber-700">Current status: <strong>{battle.battleStatus}</strong></p>
+                  {transitions.map(({ label, next }) => (
+                    <Button
+                      key={next}
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs border-amber-300 text-amber-800 hover:bg-amber-100"
+                      disabled={statusUpdating}
+                      onClick={() => updateStatus(next)}
+                    >
+                      <ChevronRight size={12} className="mr-1" /> {label}
+                    </Button>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </main>

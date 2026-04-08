@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Star, Check, Clock, Trophy, ChevronRight, Zap, Award, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,25 +12,43 @@ import { useToast } from "@/hooks/use-toast";
 export default function JudgeQueue() {
   const { user: authUser } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
-  const { data: profile } = useGetJudgeProfile({ query: { enabled: !!authUser, queryKey: getGetJudgeProfileQueryKey() } });
+  const { data: profile, refetch: refetchProfile } = useGetJudgeProfile({ query: { enabled: !!authUser, queryKey: getGetJudgeProfileQueryKey() } });
   const { data: assignments, refetch } = useGetJudgeAssignments({ query: { enabled: !!authUser, queryKey: getGetJudgeAssignmentsQueryKey() } });
 
   const pending = (assignments ?? []).filter(a => !a.isAccepted && !a.completedAt);
   const active = (assignments ?? []).filter(a => a.isAccepted && !a.completedAt);
   const completed = (assignments ?? []).filter(a => !!a.completedAt);
 
-  async function acceptAssignment(id: number) {
+  async function acceptAssignment(assignmentId: number, battleId: number) {
     try {
-      const res = await fetch(`/api/judge/assignments/${id}/accept`, {
+      const res = await fetch(`/api/judge/assignments/${assignmentId}/accept`, {
         method: "POST",
         credentials: "include",
       });
       if (!res.ok) throw new Error();
-      toast({ title: "Assignment accepted!", description: "Head to the battle to start judging." });
-      refetch();
+      toast({ title: "Assignment accepted!", description: "Taking you to the scoring page…" });
+      await refetch();
+      setLocation(`/judge/score/${battleId}/${assignmentId}`);
     } catch {
       toast({ title: "Failed", variant: "destructive" });
+    }
+  }
+
+  async function toggleAvailability() {
+    const next = !(profile?.isAvailable ?? true);
+    try {
+      await fetch("/api/judge/profile/availability", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ isAvailable: next }),
+      });
+      await refetchProfile();
+      toast({ title: next ? "Now Available" : "Now Unavailable", description: next ? "You may receive new assignments." : "You won't receive new assignments." });
+    } catch {
+      toast({ title: "Failed to update availability", variant: "destructive" });
     }
   }
 
@@ -60,9 +78,19 @@ export default function JudgeQueue() {
               </div>
             </div>
           </div>
-          <Link href="/">
-            <Button variant="ghost" size="sm">Back to Feed</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleAvailability}
+              className={profile?.isAvailable ? "border-green-200 text-green-700 hover:bg-green-50" : "border-gray-200 text-gray-500"}
+            >
+              {profile?.isAvailable ? "● Available" : "○ Unavailable"}
+            </Button>
+            <Link href="/">
+              <Button variant="ghost" size="sm">Back to Feed</Button>
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -152,7 +180,7 @@ export default function JudgeQueue() {
                       <Button
                         size="sm"
                         className="bg-purple-600 hover:bg-purple-700 text-white"
-                        onClick={() => acceptAssignment(assignment.id)}
+                        onClick={() => acceptAssignment(assignment.id, assignment.battle.id)}
                       >
                         <Check className="w-4 h-4 mr-1" /> Accept
                       </Button>
@@ -170,18 +198,20 @@ export default function JudgeQueue() {
             <h2 className="text-xl font-bold text-gray-900 mb-4">Active — In Progress</h2>
             <div className="space-y-3">
               {active.map(assignment => (
-                <Link key={assignment.id} href={`/battles/${assignment.battle.id}`}>
-                  <div className="bg-white rounded-2xl border border-purple-100 p-5 flex items-center justify-between hover:shadow-md transition-shadow">
-                    <div>
-                      <div className="font-semibold text-gray-900">{assignment.battle.title}</div>
-                      <div className="text-sm text-gray-500">{assignment.battle.challengeType}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-purple-100 text-purple-700">Judging</Badge>
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
-                    </div>
+                <div key={assignment.id} className="bg-white rounded-2xl border border-purple-100 p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+                  <div>
+                    <div className="font-semibold text-gray-900">{assignment.battle.title}</div>
+                    <div className="text-sm text-gray-500">{assignment.battle.challengeType}</div>
                   </div>
-                </Link>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-purple-100 text-purple-700">Judging</Badge>
+                    <Link href={`/judge/score/${assignment.battle.id}/${assignment.id}`}>
+                      <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white gap-1">
+                        <Star className="w-3.5 h-3.5" /> Score
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
