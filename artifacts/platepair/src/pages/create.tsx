@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { ImageUpload } from "@/components/shared/image-upload";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -52,6 +53,7 @@ export default function Create() {
   const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState<"meal" | "video">("meal");
+  const [mealImageUrl, setMealImageUrl] = useState("");
 
   const mealForm = useForm<z.infer<typeof mealSchema>>({
     resolver: zodResolver(mealSchema),
@@ -105,6 +107,7 @@ export default function Create() {
     createMeal.mutate({
       data: {
         ...values,
+        imageUrl: mealImageUrl || values.imageUrl || undefined,
         authorId: user.id,
         groupId: values.groupId || undefined,
         cuisineTags: values.cuisineTags ? values.cuisineTags.split(",").map(t => t.trim()) : [],
@@ -272,11 +275,17 @@ export default function Create() {
                   </div>
 
                   <div className="pt-6 border-t border-border/50">
-                    <Button type="button" variant="outline" className="w-full h-24 border-dashed rounded-2xl flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50">
-                      <ImageIcon size={24} className="mb-2" />
-                      <span>Upload Photo</span>
-                    </Button>
-                    <p className="text-xs text-center text-muted-foreground mt-2">Optional but highly recommended!</p>
+                    <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                      <ImageIcon size={16} className="text-muted-foreground" />
+                      Photo <span className="text-xs text-muted-foreground font-normal">(optional but highly recommended!)</span>
+                    </p>
+                    <ImageUpload
+                      value={mealImageUrl}
+                      onChange={setMealImageUrl}
+                      onClear={() => setMealImageUrl("")}
+                      label="Add a photo of your dish"
+                      hint="Show the community what you're making"
+                    />
                   </div>
 
                   <div className="pt-4 flex justify-end gap-4">

@@ -17,6 +17,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AiHackReviewResult,
   AuthUserEnvelope,
   BattleEntryWithUser,
   BattleSponsorship,
@@ -36,6 +37,8 @@ import type {
   CreateVideoBody,
   FeedResponse,
   FeedSummary,
+  GenerateBattleDescriptionBody,
+  GenerateBattleDescriptionResponse,
   GetBattleLeaderboardParams,
   GetFeedParams,
   GetFeedSummaryParams,
@@ -60,6 +63,8 @@ import type {
   OnboardingStatus,
   PartnerProfile,
   ReactionResult,
+  RequestUploadUrlBody,
+  RequestUploadUrlResponse,
   SaveResult,
   SavedItemsResponse,
   ScoreCandidateBody,
@@ -5052,3 +5057,263 @@ export function useGetUserBattles<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Request a presigned URL for file upload
+ */
+export const getRequestUploadUrlUrl = () => {
+  return `/api/storage/uploads/request-url`;
+};
+
+export const requestUploadUrl = async (
+  requestUploadUrlBody: RequestUploadUrlBody,
+  options?: RequestInit,
+): Promise<RequestUploadUrlResponse> => {
+  return customFetch<RequestUploadUrlResponse>(getRequestUploadUrlUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(requestUploadUrlBody),
+  });
+};
+
+export const getRequestUploadUrlMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestUploadUrl>>,
+    TError,
+    { data: BodyType<RequestUploadUrlBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof requestUploadUrl>>,
+  TError,
+  { data: BodyType<RequestUploadUrlBody> },
+  TContext
+> => {
+  const mutationKey = ["requestUploadUrl"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof requestUploadUrl>>,
+    { data: BodyType<RequestUploadUrlBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return requestUploadUrl(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RequestUploadUrlMutationResult = NonNullable<
+  Awaited<ReturnType<typeof requestUploadUrl>>
+>;
+export type RequestUploadUrlMutationBody = BodyType<RequestUploadUrlBody>;
+export type RequestUploadUrlMutationError = ErrorType<void>;
+
+/**
+ * @summary Request a presigned URL for file upload
+ */
+export const useRequestUploadUrl = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestUploadUrl>>,
+    TError,
+    { data: BodyType<RequestUploadUrlBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof requestUploadUrl>>,
+  TError,
+  { data: BodyType<RequestUploadUrlBody> },
+  TContext
+> => {
+  return useMutation(getRequestUploadUrlMutationOptions(options));
+};
+
+/**
+ * @summary Run AI review on a hack submission
+ */
+export const getRunAiHackReviewUrl = (videoId: number) => {
+  return `/api/ai/hack-review/${videoId}`;
+};
+
+export const runAiHackReview = async (
+  videoId: number,
+  options?: RequestInit,
+): Promise<AiHackReviewResult> => {
+  return customFetch<AiHackReviewResult>(getRunAiHackReviewUrl(videoId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getRunAiHackReviewMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof runAiHackReview>>,
+    TError,
+    { videoId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof runAiHackReview>>,
+  TError,
+  { videoId: number },
+  TContext
+> => {
+  const mutationKey = ["runAiHackReview"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof runAiHackReview>>,
+    { videoId: number }
+  > = (props) => {
+    const { videoId } = props ?? {};
+
+    return runAiHackReview(videoId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RunAiHackReviewMutationResult = NonNullable<
+  Awaited<ReturnType<typeof runAiHackReview>>
+>;
+
+export type RunAiHackReviewMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Run AI review on a hack submission
+ */
+export const useRunAiHackReview = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof runAiHackReview>>,
+    TError,
+    { videoId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof runAiHackReview>>,
+  TError,
+  { videoId: number },
+  TContext
+> => {
+  return useMutation(getRunAiHackReviewMutationOptions(options));
+};
+
+/**
+ * @summary Generate an AI battle description from a title and source URL
+ */
+export const getGenerateBattleDescriptionUrl = () => {
+  return `/api/ai/battle-description`;
+};
+
+export const generateBattleDescription = async (
+  generateBattleDescriptionBody: GenerateBattleDescriptionBody,
+  options?: RequestInit,
+): Promise<GenerateBattleDescriptionResponse> => {
+  return customFetch<GenerateBattleDescriptionResponse>(
+    getGenerateBattleDescriptionUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(generateBattleDescriptionBody),
+    },
+  );
+};
+
+export const getGenerateBattleDescriptionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateBattleDescription>>,
+    TError,
+    { data: BodyType<GenerateBattleDescriptionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateBattleDescription>>,
+  TError,
+  { data: BodyType<GenerateBattleDescriptionBody> },
+  TContext
+> => {
+  const mutationKey = ["generateBattleDescription"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateBattleDescription>>,
+    { data: BodyType<GenerateBattleDescriptionBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateBattleDescription(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateBattleDescriptionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateBattleDescription>>
+>;
+export type GenerateBattleDescriptionMutationBody =
+  BodyType<GenerateBattleDescriptionBody>;
+export type GenerateBattleDescriptionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Generate an AI battle description from a title and source URL
+ */
+export const useGenerateBattleDescription = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateBattleDescription>>,
+    TError,
+    { data: BodyType<GenerateBattleDescriptionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateBattleDescription>>,
+  TError,
+  { data: BodyType<GenerateBattleDescriptionBody> },
+  TContext
+> => {
+  return useMutation(getGenerateBattleDescriptionMutationOptions(options));
+};

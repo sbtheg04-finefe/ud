@@ -9,6 +9,60 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface RequestUploadUrlBody {
+  name: string;
+  size: number;
+  contentType: string;
+}
+
+export type RequestUploadUrlResponseMetadata = {
+  name?: string;
+  size?: number;
+  contentType?: string;
+};
+
+export interface RequestUploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
+  metadata?: RequestUploadUrlResponseMetadata;
+}
+
+export type AiHackReviewResultDimensions = {
+  clarity?: number;
+  originality?: number;
+  practicality?: number;
+  communityResonance?: number;
+};
+
+export type AiHackReviewResultVerdict =
+  (typeof AiHackReviewResultVerdict)[keyof typeof AiHackReviewResultVerdict];
+
+export const AiHackReviewResultVerdict = {
+  approved: "approved",
+  challenged: "challenged",
+  rejected: "rejected",
+} as const;
+
+export interface AiHackReviewResult {
+  score: number;
+  analysis: string;
+  dimensions: AiHackReviewResultDimensions;
+  verdict: AiHackReviewResultVerdict;
+  badge: string;
+}
+
+export interface GenerateBattleDescriptionBody {
+  title: string;
+  sourceUrl?: string;
+  ingredients?: string[];
+}
+
+export interface GenerateBattleDescriptionResponse {
+  description: string;
+  suggestedTags?: string[];
+  challengePrompt?: string;
+}
+
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 export const UserRole = {

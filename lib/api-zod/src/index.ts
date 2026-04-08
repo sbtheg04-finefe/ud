@@ -17,3 +17,4 @@ export const AuthUserSchema = zod.object({
 });
 
 export type AuthUser = zod.infer<typeof AuthUserSchema>;
+export * from "./generated/types";

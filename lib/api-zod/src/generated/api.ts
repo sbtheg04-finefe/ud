@@ -3783,3 +3783,59 @@ export const GetUserBattlesResponseItem = zod
     }),
   );
 export const GetUserBattlesResponse = zod.array(GetUserBattlesResponseItem);
+
+/**
+ * @summary Request a presigned URL for file upload
+ */
+export const RequestUploadUrlBody = zod.object({
+  name: zod.string(),
+  size: zod.number(),
+  contentType: zod.string(),
+});
+
+export const RequestUploadUrlResponse = zod.object({
+  uploadURL: zod.string(),
+  objectPath: zod.string(),
+  metadata: zod
+    .object({
+      name: zod.string().optional(),
+      size: zod.number().optional(),
+      contentType: zod.string().optional(),
+    })
+    .optional(),
+});
+
+/**
+ * @summary Run AI review on a hack submission
+ */
+export const RunAiHackReviewParams = zod.object({
+  videoId: zod.coerce.number(),
+});
+
+export const RunAiHackReviewResponse = zod.object({
+  score: zod.number(),
+  analysis: zod.string(),
+  dimensions: zod.object({
+    clarity: zod.number().optional(),
+    originality: zod.number().optional(),
+    practicality: zod.number().optional(),
+    communityResonance: zod.number().optional(),
+  }),
+  verdict: zod.enum(["approved", "challenged", "rejected"]),
+  badge: zod.string(),
+});
+
+/**
+ * @summary Generate an AI battle description from a title and source URL
+ */
+export const GenerateBattleDescriptionBody = zod.object({
+  title: zod.string(),
+  sourceUrl: zod.string().optional(),
+  ingredients: zod.array(zod.string()).optional(),
+});
+
+export const GenerateBattleDescriptionResponse = zod.object({
+  description: zod.string(),
+  suggestedTags: zod.array(zod.string()).optional(),
+  challengePrompt: zod.string().optional(),
+});

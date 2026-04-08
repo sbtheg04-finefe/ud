@@ -12,6 +12,8 @@ import onboardingRouter from "./onboarding";
 import partnerRouter from "./partner";
 import judgeRouter from "./judge";
 import eventsRouter from "./events";
+import storageRouter from "./storage";
+import aiRouter from "./ai";
 
 const router: IRouter = Router();
 
@@ -28,5 +30,7 @@ router.use("/battles", battlesRouter);
 router.use(onboardingRouter);
 router.use(partnerRouter);
 router.use(judgeRouter);
+router.use("/storage", storageRouter);
+router.use("/ai", aiRouter);
 
 export default router;

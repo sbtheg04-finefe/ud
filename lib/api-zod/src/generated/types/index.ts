@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./aiHackReviewResult";
+export * from "./aiHackReviewResultDimensions";
+export * from "./aiHackReviewResultVerdict";
 export * from "./authorizationSessionHeaderParameter";
 export * from "./authUser";
 export * from "./authUserEnvelope";
@@ -51,6 +54,8 @@ export * from "./feedItem";
 export * from "./feedItemType";
 export * from "./feedResponse";
 export * from "./feedSummary";
+export * from "./generateBattleDescriptionBody";
+export * from "./generateBattleDescriptionResponse";
 export * from "./getBattleLeaderboardParams";
 export * from "./getCurrentAuthUserResponse";
 export * from "./getFeedParams";
@@ -91,6 +96,9 @@ export * from "./onboardingStatus";
 export * from "./partnerProfile";
 export * from "./partnerProfileInput";
 export * from "./reactionResult";
+export * from "./requestUploadUrlBody";
+export * from "./requestUploadUrlResponse";
+export * from "./requestUploadUrlResponseMetadata";
 export * from "./savedItemsResponse";
 export * from "./saveResult";
 export * from "./scoreCandidateBody";

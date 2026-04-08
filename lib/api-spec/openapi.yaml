@@ -1239,6 +1239,65 @@ paths:
                 items:
                   $ref: "#/components/schemas/BattleWithDetails"
 
+  /storage/uploads/request-url:
+    post:
+      tags: [storage]
+      operationId: requestUploadUrl
+      summary: Request a presigned URL for file upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestUploadUrlBody'
+      responses:
+        '200':
+          description: Presigned upload URL generated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestUploadUrlResponse'
+        '400':
+          description: Missing or invalid fields.
+
+  /ai/hack-review/{videoId}:
+    post:
+      tags: [ai]
+      operationId: runAiHackReview
+      summary: Run AI review on a hack submission
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: AI review result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiHackReviewResult'
+
+  /ai/battle-description:
+    post:
+      tags: [ai]
+      operationId: generateBattleDescription
+      summary: Generate an AI battle description from a title and source URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateBattleDescriptionBody'
+      responses:
+        '200':
+          description: Generated description
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateBattleDescriptionResponse'
+
 components:
   schemas:
     HealthStatus:
@@ -1248,6 +1307,98 @@ components:
           type: string
       required:
         - status
+
+    RequestUploadUrlBody:
+      type: object
+      properties:
+        name:
+          type: string
+        size:
+          type: number
+        contentType:
+          type: string
+      required:
+        - name
+        - size
+        - contentType
+
+    RequestUploadUrlResponse:
+      type: object
+      properties:
+        uploadURL:
+          type: string
+        objectPath:
+          type: string
+        metadata:
+          type: object
+          properties:
+            name:
+              type: string
+            size:
+              type: number
+            contentType:
+              type: string
+      required:
+        - uploadURL
+        - objectPath
+
+    AiHackReviewResult:
+      type: object
+      properties:
+        score:
+          type: number
+        analysis:
+          type: string
+        dimensions:
+          type: object
+          properties:
+            clarity:
+              type: number
+            originality:
+              type: number
+            practicality:
+              type: number
+            communityResonance:
+              type: number
+        verdict:
+          type: string
+          enum: [approved, challenged, rejected]
+        badge:
+          type: string
+      required:
+        - score
+        - analysis
+        - dimensions
+        - verdict
+        - badge
+
+    GenerateBattleDescriptionBody:
+      type: object
+      properties:
+        title:
+          type: string
+        sourceUrl:
+          type: string
+        ingredients:
+          type: array
+          items:
+            type: string
+      required:
+        - title
+
+    GenerateBattleDescriptionResponse:
+      type: object
+      properties:
+        description:
+          type: string
+        suggestedTags:
+          type: array
+          items:
+            type: string
+        challengePrompt:
+          type: string
+      required:
+        - description
 
     User:
       type: object

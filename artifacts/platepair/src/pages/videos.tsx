@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useListVideos, useVoteOnHack, useSubmitHackForReview, getListVideosQueryKey } from "@workspace/api-client-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Navbar } from "@/components/layout/Navbar";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ChevronUp, ChevronDown, Sparkles, CheckCircle2, Clock, ThumbsUp,
-  Zap, PlayCircle, ChefHat, Trophy, FlameKindling, Star
+  Zap, PlayCircle, ChefHat, Trophy, FlameKindling, Star, Swords
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -247,10 +247,15 @@ function HackCard({ video, currentUserId }: { video: any; currentUserId: number 
           )}
 
           {isApproved && (
-            <div className="flex items-center gap-1 text-xs text-green-600 font-semibold">
-              <CheckCircle2 size={13} />
-              Approved
-            </div>
+            <Link href={`/battles/create?sourceType=video&sourceId=${video.id}`}>
+              <Button
+                size="sm"
+                className="text-xs h-7 bg-orange-500 hover:bg-orange-600 text-white gap-1"
+              >
+                <Swords size={11} />
+                Make a Battle
+              </Button>
+            </Link>
           )}
         </div>
       </div>

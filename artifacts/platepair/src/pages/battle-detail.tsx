@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, Link } from "wouter";
 import { formatDistanceToNow, format } from "date-fns";
+import { ImageUpload } from "@/components/shared/image-upload";
 import {
   useGetBattle,
   useListBattleEntries,
@@ -18,7 +19,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import {
   Swords, Flame, Clock, Users, Trophy, CheckCircle2, ChevronLeft,
   Camera, BookOpen, Utensils, Wrench, DollarSign, Timer, Star, Zap, ArrowRight,
@@ -375,11 +375,13 @@ export default function BattleDetail() {
                   Submit Your Entry
                 </h3>
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Photo URL (or paste image link)</label>
-                  <Input
-                    placeholder="https://example.com/my-dish-photo.jpg"
+                  <label className="text-sm font-medium mb-1.5 block">Photo of your dish</label>
+                  <ImageUpload
                     value={photoUrl}
-                    onChange={(e) => setPhotoUrl(e.target.value)}
+                    onChange={setPhotoUrl}
+                    onClear={() => setPhotoUrl("")}
+                    label="Add a photo of your dish"
+                    hint="Show the community your creation"
                   />
                 </div>
                 <div>
@@ -436,7 +438,7 @@ export default function BattleDetail() {
                     <div key={entry.id} className="border rounded-xl p-4 bg-card flex gap-4">
                       {entry.photoUrl && (
                         <img
-                          src={entry.photoUrl}
+                          src={entry.photoUrl.startsWith("/objects/") ? `/api/storage${entry.photoUrl}` : entry.photoUrl}
                           alt="Entry"
                           className="w-20 h-16 rounded-lg object-cover flex-shrink-0"
                         />

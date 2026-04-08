@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Swords, Zap, ChefHat, PlayCircle, Users, Globe, Lock, Flame,
-  Link2, ArrowRight, Check, AlertCircle, Loader2, Star, Clock,
+  Link2, ArrowRight, Check, AlertCircle, Loader2, Star, Clock, Sparkles,
   ShoppingCart, Utensils, ExternalLink, RefreshCw,
 } from "lucide-react";
 
@@ -89,6 +89,7 @@ export default function CreateBattle() {
   const [customIngredient, setCustomIngredient] = useState("");
   const [registrationDays, setRegistrationDays] = useState(3);
   const [cookingDays, setCookingDays] = useState(2);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
   const { data: meals, isLoading: mealsLoading } = useListMeals({}, { query: { enabled: useFallback && sourceType === "meal", queryKey: getListMealsQueryKey({}) } });
   const { data: videos, isLoading: videosLoading } = useListVideos({}, { query: { enabled: useFallback && sourceType === "video", queryKey: getListVideosQueryKey({}) } });
@@ -105,6 +106,31 @@ export default function CreateBattle() {
       }
     }
   });
+
+  async function generateAIDescription() {
+    if (!title.trim()) return;
+    setIsGeneratingAI(true);
+    try {
+      const res = await fetch("/api/ai/battle-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ title: title.trim(), sourceUrl: extracted?.sourceUrl, ingredients }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { description: string; suggestedTags?: string[]; challengePrompt?: string };
+        setDescription(data.description);
+        if (data.suggestedTags?.length) {
+          const newTags = data.suggestedTags.filter((t: string) => !ingredients.includes(t));
+          if (newTags.length) setIngredients(prev => [...prev, ...newTags.slice(0, 3)]);
+        }
+      }
+    } catch (e) {
+      console.error("AI generation failed:", e);
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  }
 
   async function handleExtractUrl() {
     if (!urlInput.trim()) return;
@@ -325,6 +351,31 @@ export default function CreateBattle() {
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">Battle Title</label>
               <Input value={title} onChange={e => setTitle(e.target.value)} className="rounded-xl" />
+            </div>
+
+            {/* Battle description with AI generation */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-medium text-gray-700">Battle Description</label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={generateAIDescription}
+                  disabled={isGeneratingAI || !title.trim()}
+                  className="h-7 text-xs gap-1 text-primary hover:bg-primary/5"
+                >
+                  {isGeneratingAI ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                  {isGeneratingAI ? "Writing..." : "AI Generate"}
+                </Button>
+              </div>
+              <Textarea
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Describe what makes this battle exciting..."
+                className="rounded-xl"
+                rows={3}
+              />
             </div>
 
             {/* Ingredient editor */}
@@ -580,7 +631,26 @@ export default function CreateBattle() {
             {sourceType === "scratch" && (
               <div className="space-y-3">
                 <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Battle title" className="rounded-xl" />
-                <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="What's the challenge?" className="rounded-xl" rows={3} />
+                <div className="relative">
+                  <Textarea
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    placeholder="What's the challenge? (or let AI write it)"
+                    className="rounded-xl pr-3"
+                    rows={3}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={generateAIDescription}
+                    disabled={isGeneratingAI || !title.trim()}
+                    className="absolute bottom-2 right-2 h-7 text-xs gap-1 bg-background border-primary/30 text-primary hover:bg-primary/5"
+                  >
+                    {isGeneratingAI ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                    {isGeneratingAI ? "Writing..." : "AI Write"}
+                  </Button>
+                </div>
               </div>
             )}
 

@@ -169,6 +169,26 @@ Auth + Onboarding pages: `onboarding.tsx` (4-step wizard with tier selection), `
 - Incentive design: non-gatekeeping (all tiers work independently), judge involvement drives 3× battle visibility
 - Referral mechanic: 8-char hex referral code per user, tracked via `referredById` on users table
 
+**Object Storage + Real Image Uploads:**
+- Replit Object Storage provisioned; `objectStorage.ts`, `objectAcl.ts` in api-server lib
+- `GET/PUT /api/storage/objects/:path` — upload and serve files via object storage
+- `ImageUpload` component (`artifacts/platepair/src/components/shared/image-upload.tsx`) — drag-and-drop, progress bar, preview, clear button
+- Wired into: battle entry submission (replaces URL text input), meal creation form
+- Path convention: object storage returns `/objects/uploads/<uuid>`; serving URL is `/api/storage/objects/<uuid>`; component handles prefix conversion automatically
+- Display fix: all `img` tags for user-uploaded content check `src.startsWith("/objects/")` and prepend `/api/storage`
+
+**Real AI Hack Review + Battle Description:**
+- `artifacts/api-server/src/routes/ai.ts`: two endpoints using GPT via Replit OpenAI integration
+- `POST /api/ai/hack-review/:videoId` — scores hack on Clarity, Originality, Practicality, CommunityResonance (JSON mode); writes AI score + analysis to DB; updates hackStatus
+- `POST /api/ai/battle-description` — generates battle description + tags from title + theme
+- AI Write button in create-battle.tsx calls battle-description endpoint; "Ask AI to Review" in videos.tsx calls hack-review endpoint
+
+**Hack→Battle Conversion:**
+- "Make a Battle" button on all AI-approved hacks in `/videos`
+- Navigates to `/battles/create?fromHackId=<id>` pre-populating title and description
+- `generateAIDescription()` in create-battle.tsx auto-calls AI endpoint when hackId is present
+- AI Write (Sparkles) button available in Scratch and Confirm steps of battle creation flow
+
 **Growth Event Tracking:**
 - DB table: `growth_events` (id, userId, sessionId, eventType, metadata JSONB, createdAt)
 - API: `POST /api/events` — fire-and-forget, returns 204, never throws at the user
