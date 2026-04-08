@@ -18,3 +18,9 @@ id = "HnxnyNHU07C9nytHjPRRw"
 uri = "file://.local/platepair-state.md"
 type = "text"
 title = "PlatePair — Full Project State Document"
+
+[[outputs]]
+id = "Bh2nKus6xg0yfDGpz-l08"
+uri = "file://.local/platepair-state.txt"
+type = "text"
+title = "PlatePair — Full Project State (Text)"
