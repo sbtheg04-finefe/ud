@@ -24,6 +24,7 @@ import JudgeQueue from "@/pages/judge-queue";
 import JudgeScore from "@/pages/judge-score";
 import CreateGroup from "@/pages/create-group";
 import LoginPage from "@/pages/login";
+import Dashboard from "@/pages/dashboard";
 
 const queryClient = new QueryClient();
 
@@ -91,6 +92,7 @@ function Router() {
         <Route path="/profile/:userId" component={Profile} />
 
         {/* Other protected routes */}
+        <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
         <Route path="/create">{() => <ProtectedRoute component={Create} />}</Route>
         <Route path="/profile/:userId/edit">{() => <ProtectedRoute component={EditProfile} />}</Route>
         <Route path="/saved">{() => <ProtectedRoute component={SavedItems} />}</Route>

@@ -14,6 +14,8 @@ import judgeRouter from "./judge";
 import eventsRouter from "./events";
 import storageRouter from "./storage";
 import aiRouter from "./ai";
+import notificationsRouter from "./notifications";
+import pointsRouter from "./points";
 
 const router: IRouter = Router();
 
@@ -32,5 +34,7 @@ router.use(partnerRouter);
 router.use(judgeRouter);
 router.use("/storage", storageRouter);
 router.use("/ai", aiRouter);
+router.use(notificationsRouter);
+router.use(pointsRouter);
 
 export default router;

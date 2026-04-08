@@ -1,4 +1,5 @@
 import { useParams, Link } from "wouter";
+import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
   useGetUser, useGetUserStats, useListMeals, useListVideos,
@@ -12,13 +13,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Calendar, ChefHat, PlayCircle, Edit } from "lucide-react";
+import { MapPin, Calendar, ChefHat, PlayCircle, Edit, Zap, Sparkles, LayoutDashboard } from "lucide-react";
+
+const POINT_REWARDS = [
+  { points: 5, label: "Bonus battle entry", icon: "⚔️" },
+  { points: 10, label: "Featured promotion", icon: "⭐" },
+  { points: 25, label: "Free Pro week", icon: "🚀" },
+  { points: 50, label: "Cookbook publish", icon: "📚" },
+  { points: 100, label: "LatePoint booking site", icon: "📅" },
+];
+
+function useWeeklyPoints() {
+  const [data, setData] = useState<any>(null);
+  useEffect(() => {
+    fetch("/api/points/weekly", { credentials: "include" })
+      .then(r => r.json())
+      .then(d => setData(d))
+      .catch(() => {});
+  }, []);
+  return data;
+}
 
 export default function Profile() {
   const { userId } = useParams();
   const id = Number(userId);
   const { data: currentUser } = useCurrentUser();
   const isOwnProfile = currentUser?.id === id;
+  const weeklyPoints = useWeeklyPoints();
 
   const { data: user, isLoading: isLoadingUser } = useGetUser(id, { query: { enabled: !!id, queryKey: getGetUserQueryKey(id) } });
   const { data: stats, isLoading: isLoadingStats } = useGetUserStats(id, { query: { enabled: !!id, queryKey: getGetUserStatsQueryKey(id) } });
@@ -122,6 +143,65 @@ export default function Profile() {
                 </div>
               )}
             </div>
+
+            {/* Weekly Points (own profile only) */}
+            {isOwnProfile && weeklyPoints && (
+              <div className="bg-card border rounded-2xl p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-serif font-bold text-lg flex items-center gap-1.5">
+                    <Zap size={16} className="text-primary" /> Weekly Points
+                  </h3>
+                  <span className="text-2xl font-bold text-primary">{weeklyPoints.total || 0}</span>
+                </div>
+                {(() => {
+                  const total = weeklyPoints.total || 0;
+                  const nextReward = POINT_REWARDS.find(r => r.points > total);
+                  if (!nextReward) return null;
+                  const pct = Math.round((total / nextReward.points) * 100);
+                  return (
+                    <>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full rounded-full bg-gradient-to-r from-primary to-amber-500" style={{ width: `${pct}%` }} />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {nextReward.icon} <strong>{nextReward.label}</strong> at {nextReward.points} pts
+                      </p>
+                    </>
+                  );
+                })()}
+                <Link href="/dashboard">
+                  <Button variant="ghost" size="sm" className="w-full gap-2 text-xs mt-1 rounded-full">
+                    <LayoutDashboard size={12} /> View Dashboard
+                  </Button>
+                </Link>
+              </div>
+            )}
+
+            {/* Go Pro CTA (own profile) */}
+            {isOwnProfile && (
+              <div className="border rounded-2xl p-5 bg-gradient-to-br from-primary/5 to-amber-50 border-primary/20 shadow-sm space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shrink-0">
+                    <Sparkles size={14} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm">Upgrade to Pro</p>
+                    <p className="text-xs text-muted-foreground">Premium battles, cookbook tools & more</p>
+                  </div>
+                </div>
+                <ul className="space-y-1 text-xs">
+                  {["Enter premium battles", "Unlimited battle creation", "Cookbook publishing", "Priority promotion"].map(b => (
+                    <li key={b} className="flex items-center gap-2">
+                      <span className="text-green-500 font-bold">✓</span> {b}
+                    </li>
+                  ))}
+                </ul>
+                <Button className="w-full rounded-full text-xs gap-1.5" size="sm">
+                  <Sparkles size={12} /> Upgrade to Pro
+                </Button>
+                <p className="text-[10px] text-center text-muted-foreground">Or earn 25 weekly pts for a free week</p>
+              </div>
+            )}
 
             {/* Tags */}
             {(!isLoadingUser && ((user?.dietaryPreferences?.length ?? 0) > 0 || (user?.cookingInterests?.length ?? 0) > 0)) && (

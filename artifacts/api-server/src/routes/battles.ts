@@ -14,6 +14,8 @@ import {
 import { eq, and, desc, count, sql, inArray, isNotNull, or } from "drizzle-orm";
 import crypto from "node:crypto";
 import { extractUrl } from "../lib/url-extractor";
+import { awardPoints } from "./points";
+import { createNotification } from "./notifications";
 
 const router = Router();
 
@@ -455,6 +457,27 @@ router.post("/:battleId/join", async (req, res) => {
   await db.insert(battleInterestTable).values({
     battleId, userId, intentType: "wants_to_join",
   }).onConflictDoNothing();
+
+  // Award joiner 2 points for joining a battle
+  try { await awardPoints(userId, "battle_join_complete", 2); } catch {}
+
+  // When this is the 2nd participant (first real joiner after creator), award creator 3pts
+  if (updated?.createdBy && updated.createdBy !== userId && updated.participantCount === 2) {
+    try { await awardPoints(updated.createdBy, "battle_created", 3); } catch {}
+  }
+
+  // Notify creator that someone joined
+  if (updated?.createdBy && updated.createdBy !== userId) {
+    try {
+      await createNotification(
+        updated.createdBy,
+        "battle_joined",
+        "🎉 New participant joined!",
+        `Someone joined "${updated.title}"! Now at ${updated.participantCount} participants.`,
+        { battleId }
+      );
+    } catch {}
+  }
 
   res.json({ ok: true, participantCount: updated.participantCount });
 });

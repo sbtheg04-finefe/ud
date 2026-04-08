@@ -10,7 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, Video, Bookmark, PlusCircle, ChefHat, Swords, Building2, Star, LogOut, UserCircle2 } from "lucide-react";
+import { Home, Users, Video, Bookmark, PlusCircle, ChefHat, Swords, Building2, Star, LogOut, UserCircle2, LayoutDashboard } from "lucide-react";
+import { NotificationBell } from "./NotificationBell";
 
 export function Navbar() {
   const [location] = useLocation();
@@ -78,6 +79,8 @@ export function Navbar() {
             </Link>
           )}
 
+          {isAuthenticated && <NotificationBell />}
+
           {isAuthenticated && (
             <Link href="/create" data-testid="link-create">
               <Button className="rounded-full shadow-md gap-2" size="sm">
@@ -118,6 +121,11 @@ export function Navbar() {
                   </div>
                 </div>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard" className="cursor-pointer w-full flex items-center gap-2" data-testid="link-menu-dashboard">
+                    <LayoutDashboard size={14} /> Dashboard
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href={`/profile/${user.id}`} className="cursor-pointer w-full flex items-center" data-testid="link-menu-profile">
                     Profile
