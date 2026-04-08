@@ -12,3 +12,9 @@ id = "F44c3MWaz6BConjpTpWpA"
 uri = "file://PLATEPAIR_BRIEF.docx"
 type = "word_document"
 title = "PlatePair — Project Brief (.docx)"
+
+[[outputs]]
+id = "HnxnyNHU07C9nytHjPRRw"
+uri = "file://.local/platepair-state.md"
+type = "text"
+title = "PlatePair — Full Project State Document"
