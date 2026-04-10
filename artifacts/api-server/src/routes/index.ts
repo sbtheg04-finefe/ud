@@ -18,6 +18,7 @@ import notificationsRouter from "./notifications";
 import pointsRouter from "./points";
 import hacksAdminRouter from "./hacks-admin";
 import adminRouter from "./admin";
+import linkPreviewRouter from "./link-preview";
 
 const router: IRouter = Router();
 
@@ -40,5 +41,6 @@ router.use(notificationsRouter);
 router.use(pointsRouter);
 router.use(hacksAdminRouter);
 router.use(adminRouter);
+router.use("/api", linkPreviewRouter);
 
 export default router;
