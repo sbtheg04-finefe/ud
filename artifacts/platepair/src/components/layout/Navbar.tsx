@@ -1,8 +1,9 @@
+import { useState, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,190 +11,206 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, Video, Bookmark, PlusCircle, ChefHat, Swords, Building2, Star, LogOut, UserCircle2, LayoutDashboard, Shield } from "lucide-react";
+import {
+  LayoutGrid, Layers, BookmarkCheck, MessageSquare, Globe,
+  Search, Sparkles, SlidersHorizontal, ChefHat,
+  LogOut, UserCircle2, LayoutDashboard, Shield,
+  Building2, Star, X,
+} from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
+import { useLocation as useWouterLocation } from "wouter";
 
-export function Navbar() {
+const bottomNavItems = [
+  { href: "/",           label: "Cards",       icon: LayoutGrid },
+  { href: "/groups",     label: "Stacks",      icon: Layers },
+  { href: "/saved",      label: "Collections", icon: BookmarkCheck },
+  { href: "/battles",    label: "Chat",        icon: MessageSquare },
+  { href: "/videos",     label: "Discover",    icon: Globe },
+];
+
+export function Navbar({ onSearch }: { onSearch?: (q: string) => void }) {
   const [location] = useLocation();
   const { data: user, isPartner, isJudge } = useCurrentUser();
   const { logout, isAuthenticated, isLoading, user: authUser } = useAuth();
   const isAdmin = authUser?.role === "admin";
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const navItems = [
-    { href: "/", label: "Feed", icon: Home },
-    { href: "/groups", label: "Groups", icon: Users },
-    { href: "/videos", label: "Hacks", icon: Video },
-    { href: "/battles", label: "Battles", icon: Swords },
-    { href: "/saved", label: "Saved", icon: Bookmark },
-  ];
+  function handleSearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    onSearch?.(searchValue);
+  }
+
+  function openSearch() {
+    setSearchOpen(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2" data-testid="link-home-logo">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <ChefHat size={24} />
-            </div>
-            <span className="hidden font-serif text-xl font-bold tracking-tight sm:inline-block">
-              PlatePair
-            </span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => {
-              const isActive = location === item.href;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  data-testid={`link-nav-${item.label.toLowerCase()}`}
-                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full transition-colors ${
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  <Icon size={18} />
-                  {item.label}
+    <>
+      {/* ── Top header ── */}
+      <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur border-b border-gray-100">
+        <div className="flex items-center gap-3 px-4 h-14 max-w-2xl mx-auto">
+
+          {/* Logo — collapses when search is open */}
+          {!searchOpen && (
+            <Link href="/" className="flex items-center gap-2 shrink-0">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 text-white">
+                <ChefHat size={20} />
+              </div>
+            </Link>
+          )}
+
+          {/* Search bar */}
+          {searchOpen ? (
+            <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center gap-2">
+              <div className="flex-1 flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2">
+                <Search size={16} className="text-gray-400 shrink-0" />
+                <input
+                  ref={inputRef}
+                  value={searchValue}
+                  onChange={e => setSearchValue(e.target.value)}
+                  placeholder="Search meals, hacks, creators…"
+                  className="flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => { setSearchOpen(false); setSearchValue(""); }}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500"
+              >
+                <X size={18} />
+              </button>
+            </form>
+          ) : (
+            <button
+              onClick={openSearch}
+              className="flex-1 flex items-center gap-2 bg-gray-100 hover:bg-gray-200 transition-colors rounded-full px-4 py-2 text-left"
+            >
+              <Search size={16} className="text-gray-400" />
+              <span className="text-sm text-gray-400">Search</span>
+            </button>
+          )}
+
+          {/* Right icons */}
+          {!searchOpen && (
+            <div className="flex items-center gap-1 shrink-0">
+              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500">
+                <Sparkles size={20} className="text-indigo-500" />
+              </button>
+              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500">
+                <SlidersHorizontal size={20} />
+              </button>
+
+              {isAuthenticated && <NotificationBell />}
+
+              {!isLoading && !isAuthenticated && (
+                <Link href="/login">
+                  <button className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500">
+                    <UserCircle2 size={22} />
+                  </button>
                 </Link>
-              );
-            })}
-          </nav>
-        </div>
+              )}
 
-        <div className="flex items-center gap-4">
-          {isPartner && (
-            <Link href="/partner/dashboard">
-              <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-                <Building2 size={15} />
-                <span>Partner</span>
-              </Button>
-            </Link>
-          )}
-          {isJudge && (
-            <Link href="/judge/queue">
-              <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-1.5 text-purple-600 hover:text-purple-700 hover:bg-purple-50">
-                <Star size={15} />
-                <span>Judge</span>
-              </Button>
-            </Link>
-          )}
-
-          {isAuthenticated && <NotificationBell />}
-
-          {isAuthenticated && (
-            <Link href="/create" data-testid="link-create">
-              <Button className="rounded-full shadow-md gap-2" size="sm">
-                <PlusCircle size={18} />
-                <span className="hidden sm:inline">Share</span>
-              </Button>
-            </Link>
-          )}
-
-          {!isLoading && !isAuthenticated && (
-            <Link href="/login">
-              <Button variant="outline" size="sm" className="rounded-full gap-2 border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-400">
-                <UserCircle2 size={16} />
-                <span>Sign In</span>
-              </Button>
-            </Link>
-          )}
-
-          {user && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" data-testid="button-user-menu">
-                  <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
-                    <AvatarImage src={user.avatarUrl || undefined} alt={user.displayName} />
-                    <AvatarFallback className="bg-secondary text-secondary-foreground">
-                      {user.displayName.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="flex items-center justify-start gap-2 p-2">
-                  <div className="flex flex-col space-y-1 leading-none">
-                    <p className="font-medium" data-testid="text-menu-name">{user.displayName}</p>
-                    <p className="text-sm text-muted-foreground" data-testid="text-menu-username">
-                      @{user.username}
-                    </p>
-                  </div>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard" className="cursor-pointer w-full flex items-center gap-2" data-testid="link-menu-dashboard">
-                    <LayoutDashboard size={14} /> Dashboard
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/profile/${user.id}`} className="cursor-pointer w-full flex items-center" data-testid="link-menu-profile">
-                    Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/profile/${user.id}/edit`} className="cursor-pointer w-full flex items-center" data-testid="link-menu-settings">
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
-                {isPartner && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/partner/dashboard" className="cursor-pointer w-full flex items-center gap-2 text-blue-600">
-                      <Building2 size={14} /> Partner Dashboard
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                {isJudge && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/judge/queue" className="cursor-pointer w-full flex items-center gap-2 text-purple-600">
-                      <Star size={14} /> Judge Queue
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                {isAdmin && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin" className="cursor-pointer w-full flex items-center gap-2 text-orange-600 font-semibold">
-                      <Shield size={14} /> Admin Panel
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-red-600 cursor-pointer flex items-center gap-2"
-                  onClick={logout}
-                >
-                  <LogOut size={14} /> Log Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              {user && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 ml-1">
+                      <Avatar className="h-8 w-8 border-2 border-white shadow-sm">
+                        <AvatarImage src={user.avatarUrl || undefined} alt={user.displayName} />
+                        <AvatarFallback className="bg-orange-100 text-orange-700 text-xs font-semibold">
+                          {user.displayName.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="flex items-center gap-2 p-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.avatarUrl || undefined} />
+                        <AvatarFallback className="bg-orange-100 text-orange-700 text-xs">
+                          {user.displayName.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <p className="font-medium text-sm">{user.displayName}</p>
+                        <p className="text-xs text-muted-foreground">@{user.username}</p>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard" className="cursor-pointer flex items-center gap-2">
+                        <LayoutDashboard size={14} /> Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/profile/${user.id}`} className="cursor-pointer flex items-center gap-2">
+                        <UserCircle2 size={14} /> Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/profile/${user.id}/edit`} className="cursor-pointer flex items-center gap-2">
+                        <SlidersHorizontal size={14} /> Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    {isPartner && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/partner/dashboard" className="cursor-pointer flex items-center gap-2 text-blue-600">
+                          <Building2 size={14} /> Partner Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {isJudge && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/judge/queue" className="cursor-pointer flex items-center gap-2 text-purple-600">
+                          <Star size={14} /> Judge Queue
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {isAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin" className="cursor-pointer flex items-center gap-2 text-orange-600 font-semibold">
+                          <Shield size={14} /> Admin Panel
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-600 cursor-pointer flex items-center gap-2" onClick={logout}>
+                      <LogOut size={14} /> Log Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
           )}
         </div>
-      </div>
-      
-      {/* Mobile nav */}
-      <div className="md:hidden border-t fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur z-50">
-        <nav className="flex items-center justify-around p-2">
-          {navItems.map((item) => {
-            const isActive = location === item.href;
-            const Icon = item.icon;
+      </header>
+
+      {/* ── Bottom tab bar (all screen sizes) ── */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t border-gray-100">
+        <div className="flex items-stretch justify-around max-w-2xl mx-auto">
+          {bottomNavItems.map(({ href, label, icon: Icon }) => {
+            const isActive = href === "/" ? location === "/" : location.startsWith(href);
             return (
               <Link
-                key={item.href}
-                href={item.href}
-                className={`flex flex-col items-center gap-1 p-2 min-w-[64px] rounded-xl ${
-                  isActive ? "text-primary" : "text-muted-foreground"
+                key={href}
+                href={href}
+                className={`flex flex-col items-center justify-center gap-0.5 py-2 px-3 flex-1 transition-colors ${
+                  isActive ? "text-orange-500" : "text-gray-400 hover:text-gray-600"
                 }`}
               >
-                <div className={`p-1 rounded-full ${isActive ? "bg-primary/10" : ""}`}>
-                  <Icon size={20} />
+                <div className={`p-1.5 rounded-xl transition-colors ${isActive ? "bg-orange-50" : ""}`}>
+                  <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
                 </div>
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className={`text-[10px] font-medium leading-none ${isActive ? "text-orange-500" : ""}`}>
+                  {label}
+                </span>
               </Link>
             );
           })}
-        </nav>
-      </div>
-    </header>
+        </div>
+      </nav>
+    </>
   );
 }

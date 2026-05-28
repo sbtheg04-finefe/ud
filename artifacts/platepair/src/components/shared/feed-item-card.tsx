@@ -124,20 +124,25 @@ export function FeedItemCard({ item }: FeedItemCardProps) {
 
   if (item.type === "video" && item.video) {
     const video = item.video;
+    const author = video.author;
     return (
       <Card className="overflow-hidden hover-elevate transition-all border-border/50 group" data-testid={`card-feed-video-${video.id}`}>
         <CardHeader className="p-4 pb-0 flex flex-row items-start justify-between space-y-0">
           <div className="flex items-center gap-3">
-            <Link href={`/profile/${video.author.id}`}>
-              <Avatar className="h-10 w-10 border border-background shadow-sm hover:ring-2 hover:ring-accent/20 transition-all cursor-pointer">
-                <AvatarImage src={video.author.avatarUrl || undefined} alt={video.author.displayName} />
-                <AvatarFallback>{video.author.displayName.substring(0, 2).toUpperCase()}</AvatarFallback>
-              </Avatar>
-            </Link>
-            <div className="flex flex-col">
-              <Link href={`/profile/${video.author.id}`} className="font-medium text-sm hover:underline cursor-pointer" data-testid={`link-author-${video.author.id}`}>
-                {video.author.displayName}
+            {author && (
+              <Link href={`/profile/${author.id}`}>
+                <Avatar className="h-10 w-10 border border-background shadow-sm hover:ring-2 hover:ring-accent/20 transition-all cursor-pointer">
+                  <AvatarImage src={author.avatarUrl || undefined} alt={author.displayName} />
+                  <AvatarFallback>{author.displayName.substring(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
               </Link>
+            )}
+            <div className="flex flex-col">
+              {author && (
+                <Link href={`/profile/${author.id}`} className="font-medium text-sm hover:underline cursor-pointer" data-testid={`link-author-${author.id}`}>
+                  {author.displayName}
+                </Link>
+              )}
               <div className="flex items-center text-xs text-muted-foreground gap-1.5">
                 <span>{formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}</span>
                 {video.group && (

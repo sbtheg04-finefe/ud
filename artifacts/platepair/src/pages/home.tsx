@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Link } from "wouter";
 import { useGetFeed, useGetFeedSummary, getGetFeedQueryKey, getGetFeedSummaryQueryKey } from "@workspace/api-client-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -6,282 +6,351 @@ import { FeedItemCard } from "@/components/shared/feed-item-card";
 import { Navbar } from "@/components/layout/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Users, Utensils, Video, TrendingUp,
-  Swords, Star, Building2, ChefHat,
-  ArrowRight, Sparkles, Gavel, Zap, Plus,
+  Link2, Clipboard, Image, Film, FileText, FileCode, Plus, X,
+  ArrowUpRight, Loader2, Utensils,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 
-function RoleActionBanner() {
-  const { data: user, isPartner, isJudge, isAuthLoading } = useCurrentUser();
+interface LinkPreview {
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  domain?: string;
+  platform?: string;
+}
 
-  if (isAuthLoading || !user) return null;
+function LinkInputCard() {
+  const { isAuthenticated } = useAuth();
+  const [inputValue, setInputValue] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [preview, setPreview] = useState<LinkPreview | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const firstName = user.displayName?.split(" ")[0] || "Chef";
+  async function fetchPreview(url: string) {
+    if (!url.trim()) return;
+    setIsLoading(true);
+    setError(null);
+    setPreview(null);
+    try {
+      const res = await fetch("/api/link/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ url: url.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to fetch preview");
+      setPreview({
+        url: url.trim(),
+        title: data.title,
+        description: data.description,
+        image: data.image,
+        domain: data.domain,
+        platform: data.platform,
+      });
+    } catch (e: any) {
+      setError(e.message ?? "Could not fetch link preview");
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
-  if (isPartner && isJudge) {
-    return (
-      <div className="rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 p-5 text-white mb-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-emerald-100 text-xs font-semibold uppercase tracking-widest mb-1">
-              <Sparkles className="w-3.5 h-3.5" /> Full Package Member
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (inputValue.trim()) fetchPreview(inputValue);
+  }
+
+  async function handlePaste() {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text.trim()) {
+        setInputValue(text.trim());
+        fetchPreview(text.trim());
+      }
+    } catch {
+      inputRef.current?.focus();
+    }
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(true);
+  }
+
+  function handleDragLeave() {
+    setIsDragging(false);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    const text = e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text/plain");
+    if (text?.trim()) {
+      setInputValue(text.trim());
+      fetchPreview(text.trim());
+    }
+  }
+
+  const fileTypes = [
+    { label: "IMG", count: "+5", icon: Image, color: "bg-indigo-100 text-indigo-600", pos: "top-4 left-6" },
+    { label: "MOV", count: null, icon: Film, color: "bg-indigo-100 text-indigo-600", pos: "top-4 right-6" },
+    { label: "DOCX", count: null, icon: FileText, color: "bg-indigo-100 text-indigo-600", pos: "bottom-4 left-4" },
+    { label: "PDF", count: null, icon: FileText, color: "bg-indigo-100 text-indigo-600", pos: "bottom-4 left-1/2 -translate-x-1/2" },
+    { label: "MD", count: "+10", icon: FileCode, color: "bg-indigo-100 text-indigo-600", pos: "bottom-4 right-4" },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+      {/* Link input row */}
+      <form onSubmit={handleSubmit} className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+        <Link2 size={18} className="text-gray-400 shrink-0" />
+        <input
+          ref={inputRef}
+          value={inputValue}
+          onChange={e => setInputValue(e.target.value)}
+          placeholder="Type or paste link..."
+          className="flex-1 text-sm outline-none placeholder:text-gray-400 bg-transparent"
+        />
+        <button
+          type="button"
+          onClick={handlePaste}
+          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+          title="Paste from clipboard"
+        >
+          <Clipboard size={16} />
+        </button>
+      </form>
+
+      {/* Preview result */}
+      {isLoading && (
+        <div className="flex items-center justify-center gap-2 py-6 text-gray-400 text-sm">
+          <Loader2 size={18} className="animate-spin" />
+          Fetching preview…
+        </div>
+      )}
+
+      {error && (
+        <div className="px-4 py-3 text-sm text-red-500 flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="text-gray-400 hover:text-gray-600">
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {preview && !isLoading && (
+        <div className="relative">
+          {preview.image && (
+            <div className="relative aspect-video w-full overflow-hidden bg-gray-100">
+              <img src={preview.image} alt={preview.title ?? ""} className="w-full h-full object-cover" />
+              <button
+                onClick={() => { setPreview(null); setInputValue(""); }}
+                className="absolute top-3 right-3 bg-black/70 text-white rounded-full p-1.5 hover:bg-black/90 transition-colors"
+              >
+                <X size={14} />
+              </button>
             </div>
-            <h2 className="text-xl font-bold mb-1">Welcome back, {firstName}.</h2>
-            <p className="text-emerald-100 text-sm">You're a brand sponsor and a certified judge. Your battles get maximum community visibility.</p>
+          )}
+          <div className="p-4">
+            {preview.domain && (
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="text-xs bg-gray-900 text-white rounded-full px-2.5 py-0.5 font-medium flex items-center gap-1">
+                  {preview.domain} <ArrowUpRight size={10} />
+                </span>
+              </div>
+            )}
+            {preview.title && <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1">{preview.title}</h3>}
+            {preview.description && <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{preview.description}</p>}
+            <div className="flex gap-2 mt-3">
+              {isAuthenticated ? (
+                <Link href="/create">
+                  <button className="flex-1 bg-gray-900 text-white text-xs font-semibold rounded-full px-4 py-2 flex items-center justify-center gap-1.5 hover:bg-gray-700 transition-colors">
+                    Save to Hub
+                  </button>
+                </Link>
+              ) : (
+                <Link href="/login">
+                  <button className="flex-1 bg-gray-900 text-white text-xs font-semibold rounded-full px-4 py-2 flex items-center justify-center gap-1.5 hover:bg-gray-700 transition-colors">
+                    Sign in to Save
+                  </button>
+                </Link>
+              )}
+              <a
+                href={preview.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 border border-gray-200 text-gray-700 text-xs font-semibold rounded-full px-4 py-2 flex items-center justify-center gap-1.5 hover:bg-gray-50 transition-colors"
+              >
+                Visit Link <ArrowUpRight size={12} />
+              </a>
+            </div>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 mt-4">
-          <Link href="/judge/queue">
-            <button className="w-full rounded-xl bg-white/20 hover:bg-white/30 transition-colors px-3 py-2 text-sm font-medium flex items-center gap-2">
-              <Gavel className="w-4 h-4" /> Open Judge Queue
-            </button>
-          </Link>
-          <Link href="/partner/dashboard">
-            <button className="w-full rounded-xl bg-white/20 hover:bg-white/30 transition-colors px-3 py-2 text-sm font-medium flex items-center gap-2">
-              <Building2 className="w-4 h-4" /> Partner Dashboard
-            </button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (isJudge) {
-    return (
-      <div className="rounded-2xl bg-gradient-to-r from-purple-500 to-violet-600 p-5 text-white mb-6">
-        <div className="flex items-center gap-2 text-purple-100 text-xs font-semibold uppercase tracking-widest mb-1">
-          <Star className="w-3.5 h-3.5" /> Certified Judge
-        </div>
-        <h2 className="text-xl font-bold mb-1">Battles are waiting for you, {firstName}.</h2>
-        <p className="text-purple-100 text-sm mb-4">
-          Battles with a judge rank 3× higher in the feed. Your authority score grows with every verdict.
-        </p>
-        <Link href="/judge/queue">
-          <button className="rounded-xl bg-white text-purple-700 font-semibold px-4 py-2 text-sm flex items-center gap-2 hover:bg-purple-50 transition-colors">
-            <Gavel className="w-4 h-4" /> Open Judge Queue <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </Link>
-      </div>
-    );
-  }
-
-  if (isPartner) {
-    return (
-      <div className="rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 p-5 text-white mb-6">
-        <div className="flex items-center gap-2 text-blue-100 text-xs font-semibold uppercase tracking-widest mb-1">
-          <Building2 className="w-3.5 h-3.5" /> Brand Partner
-        </div>
-        <h2 className="text-xl font-bold mb-1">Ready to sponsor your next battle?</h2>
-        <p className="text-blue-100 text-sm mb-4">Sponsored battles get 2.5× more participants. Pick a live battle and attach your brand in minutes.</p>
-        <div className="flex gap-2">
-          <Link href="/partner/dashboard">
-            <button className="rounded-xl bg-white text-blue-700 font-semibold px-4 py-2 text-sm flex items-center gap-2 hover:bg-blue-50 transition-colors">
-              <Building2 className="w-4 h-4" /> Partner Dashboard <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </Link>
-          <Link href="/battles">
-            <button className="rounded-xl bg-white/20 hover:bg-white/30 transition-colors px-4 py-2 text-sm font-medium">
-              Browse Battles
-            </button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-2xl border border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50 p-5 mb-6">
-      <div className="flex items-center gap-2 text-orange-500 text-xs font-semibold uppercase tracking-widest mb-1">
-        <ChefHat className="w-3.5 h-3.5" /> What will you cook today?
-      </div>
-      <h2 className="text-xl font-bold text-gray-900 mb-1">Hey {firstName}, the community is cooking.</h2>
-      <p className="text-gray-500 text-sm mb-4">Join a live battle, start your own circle, or share what you made today.</p>
-      <div className="flex flex-wrap gap-2">
-        <Link href="/battles">
-          <button className="rounded-xl bg-orange-500 text-white font-semibold px-4 py-2 text-sm flex items-center gap-2 hover:bg-orange-600 transition-colors">
-            <Swords className="w-4 h-4" /> Live Battles
-          </button>
-        </Link>
-        <Link href="/groups">
-          <button className="rounded-xl border border-gray-200 bg-white text-gray-700 font-medium px-4 py-2 text-sm flex items-center gap-2 hover:border-orange-300 transition-colors">
-            <Users className="w-4 h-4" /> My Circles
-          </button>
-        </Link>
-        <Link href="/create">
-          <button className="rounded-xl border border-gray-200 bg-white text-gray-700 font-medium px-4 py-2 text-sm flex items-center gap-2 hover:border-orange-300 transition-colors">
-            <Plus className="w-4 h-4" /> Share a Meal
-          </button>
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function QuickActions() {
-  const { isPartner, isJudge } = useCurrentUser();
-
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-      <Link href="/battles">
-        <div className="rounded-2xl bg-orange-50 border border-orange-100 p-4 text-center hover:shadow-md transition-all cursor-pointer group">
-          <Swords className="w-6 h-6 text-orange-500 mx-auto mb-2 group-hover:scale-110 transition-transform" />
-          <div className="text-sm font-semibold text-gray-800">Battle Arena</div>
-          <div className="text-xs text-gray-500">48 live now</div>
-        </div>
-      </Link>
-      <Link href="/videos">
-        <div className="rounded-2xl bg-yellow-50 border border-yellow-100 p-4 text-center hover:shadow-md transition-all cursor-pointer group">
-          <Zap className="w-6 h-6 text-yellow-500 mx-auto mb-2 group-hover:scale-110 transition-transform" />
-          <div className="text-sm font-semibold text-gray-800">Cooking Hacks</div>
-          <div className="text-xs text-gray-500">AI-reviewed tips</div>
-        </div>
-      </Link>
-      {isJudge ? (
-        <Link href="/judge/queue">
-          <div className="rounded-2xl bg-purple-50 border border-purple-200 p-4 text-center hover:shadow-md transition-all cursor-pointer group">
-            <Gavel className="w-6 h-6 text-purple-500 mx-auto mb-2 group-hover:scale-110 transition-transform" />
-            <div className="text-sm font-semibold text-gray-800">Judge Queue</div>
-            <div className="text-xs text-purple-500 font-medium">Needs your verdict</div>
-          </div>
-        </Link>
-      ) : (
-        <Link href="/groups">
-          <div className="rounded-2xl bg-blue-50 border border-blue-100 p-4 text-center hover:shadow-md transition-all cursor-pointer group">
-            <Users className="w-6 h-6 text-blue-500 mx-auto mb-2 group-hover:scale-110 transition-transform" />
-            <div className="text-sm font-semibold text-gray-800">My Circles</div>
-            <div className="text-xs text-gray-500">Your groups</div>
-          </div>
-        </Link>
       )}
-      {isPartner ? (
-        <Link href="/partner/dashboard">
-          <div className="rounded-2xl bg-indigo-50 border border-indigo-200 p-4 text-center hover:shadow-md transition-all cursor-pointer group">
-            <Building2 className="w-6 h-6 text-indigo-500 mx-auto mb-2 group-hover:scale-110 transition-transform" />
-            <div className="text-sm font-semibold text-gray-800">Sponsor</div>
-            <div className="text-xs text-indigo-500 font-medium">Partner dashboard</div>
+
+      {/* File drop zone */}
+      {!preview && !isLoading && (
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+          className={`relative h-44 mx-3 my-3 rounded-xl border-2 border-dashed transition-colors cursor-pointer flex flex-col items-center justify-center gap-2 select-none ${
+            isDragging
+              ? "border-indigo-400 bg-indigo-50"
+              : "border-gray-200 bg-gray-50/60 hover:border-gray-300 hover:bg-gray-50"
+          }`}
+        >
+          <input ref={fileInputRef} type="file" className="hidden" accept="image/*,video/*,.pdf,.docx,.md" />
+
+          {/* Floating file type badges */}
+          <div className="absolute top-3 left-5 flex flex-col items-center gap-1">
+            <div className="relative">
+              <div className="w-10 h-12 bg-white rounded-lg shadow-sm border border-gray-200 flex items-end justify-center pb-1.5">
+                <span className="text-[9px] font-bold text-white bg-gray-900 rounded px-1 py-0.5">IMG</span>
+              </div>
+              <span className="absolute -top-1.5 -right-1.5 text-[9px] bg-gray-700 text-white rounded-full px-1 font-semibold">+5</span>
+            </div>
           </div>
-        </Link>
-      ) : (
-        <Link href="/create">
-          <div className="rounded-2xl bg-green-50 border border-green-100 p-4 text-center hover:shadow-md transition-all cursor-pointer group">
-            <Plus className="w-6 h-6 text-green-500 mx-auto mb-2 group-hover:scale-110 transition-transform" />
-            <div className="text-sm font-semibold text-gray-800">Share</div>
-            <div className="text-xs text-gray-500">Post a meal or hack</div>
+
+          <div className="absolute top-3 right-5">
+            <div className="w-10 h-12 bg-white rounded-lg shadow-sm border border-gray-200 flex items-end justify-center pb-1.5">
+              <span className="text-[9px] font-bold text-white bg-gray-900 rounded px-1 py-0.5">MOV</span>
+            </div>
           </div>
-        </Link>
+
+          <div className="absolute bottom-3 left-4">
+            <div className="w-10 h-12 bg-white rounded-lg shadow-sm border border-gray-200 flex items-end justify-center pb-1.5">
+              <span className="text-[9px] font-bold text-white bg-gray-900 rounded px-1 py-0.5">DOCX</span>
+            </div>
+          </div>
+
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
+            <div className="w-10 h-12 bg-white rounded-lg shadow-sm border border-gray-200 flex items-end justify-center pb-1.5">
+              <span className="text-[9px] font-bold text-white bg-gray-900 rounded px-1 py-0.5">PDF</span>
+            </div>
+          </div>
+
+          <div className="absolute bottom-3 right-4">
+            <div className="relative">
+              <div className="w-10 h-12 bg-white rounded-lg shadow-sm border border-gray-200 flex items-end justify-center pb-1.5">
+                <span className="text-[9px] font-bold text-white bg-gray-900 rounded px-1 py-0.5">MD</span>
+              </div>
+              <span className="absolute -top-1.5 -right-1.5 text-[9px] bg-gray-700 text-white rounded-full px-1 font-semibold">+10</span>
+            </div>
+          </div>
+
+          {/* Center text */}
+          <p className="text-sm text-gray-400 font-medium z-10">Drop files here</p>
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); fileInputRef.current?.click(); }}
+            className="z-10 text-xs border border-gray-300 bg-white text-gray-600 rounded-full px-4 py-1.5 hover:border-gray-400 transition-colors font-medium"
+          >
+            Choose a file
+          </button>
+        </div>
       )}
     </div>
   );
 }
 
-export default function Home() {
+function FeedSection() {
   const [filter, setFilter] = useState<"all" | "meals" | "videos">("all");
-  const { data: summary, isLoading: isLoadingSummary } = useGetFeedSummary(undefined, { query: { enabled: true, queryKey: getGetFeedSummaryQueryKey() } });
-  const { data: feedData, isLoading: isLoadingFeed } = useGetFeed(undefined, { query: { enabled: true, queryKey: getGetFeedQueryKey() } });
+  const { data: feedData, isLoading } = useGetFeed(undefined, {
+    query: { enabled: true, queryKey: getGetFeedQueryKey() },
+  });
 
   const filteredFeed = feedData?.items.filter(item => {
-    if (filter === "all") return true;
     if (filter === "meals") return item.type === "meal";
     if (filter === "videos") return item.type === "video";
     return true;
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="container mx-auto px-4 py-6 max-w-3xl">
+    <div>
+      {/* Filter tabs */}
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-none">
+        {(["all", "meals", "videos"] as const).map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              filter === f
+                ? "bg-gray-900 text-white"
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+            }`}
+          >
+            {f === "all" ? "All" : f === "meals" ? "Meals" : "Hacks"}
+          </button>
+        ))}
+      </div>
 
-        {/* Role-aware action banner */}
-        <RoleActionBanner />
-
-        {/* Quick-action tiles */}
-        <QuickActions />
-
-        {/* Community stats */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-card border rounded-xl p-3 flex flex-col items-center text-center shadow-sm">
-            <Users className="text-primary mb-1" size={18} />
-            {isLoadingSummary ? <Skeleton className="h-5 w-8 mb-0.5" /> : <span className="text-xl font-bold font-serif">{summary?.activeCooks ?? 0}</span>}
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Cooks</span>
-          </div>
-          <div className="bg-card border rounded-xl p-3 flex flex-col items-center text-center shadow-sm">
-            <Utensils className="text-secondary mb-1" size={18} />
-            {isLoadingSummary ? <Skeleton className="h-5 w-8 mb-0.5" /> : <span className="text-xl font-bold font-serif">{summary?.mealsAvailableToday ?? 0}</span>}
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Meals Today</span>
-          </div>
-          <div className="bg-card border rounded-xl p-3 flex flex-col items-center text-center shadow-sm">
-            <TrendingUp className="text-primary mb-1" size={18} />
-            {isLoadingSummary ? (
-              <Skeleton className="h-5 w-8 mb-0.5" />
-            ) : (
-              <div className="flex gap-1 flex-wrap justify-center">
-                {summary?.trendingTags?.slice(0, 1).map(tag => (
-                  <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
-                ))}
+      {/* Feed cards */}
+      <div className="flex flex-col gap-4">
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border bg-white shadow-sm overflow-hidden">
+              <Skeleton className="h-52 w-full rounded-none" />
+              <div className="p-4">
+                <Skeleton className="h-4 w-3/4 mb-2" />
+                <Skeleton className="h-3 w-1/2" />
               </div>
-            )}
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mt-0.5">Trending</span>
+            </div>
+          ))
+        ) : filteredFeed?.length === 0 ? (
+          <div className="text-center py-16 text-gray-400 border-2 border-dashed border-gray-200 rounded-2xl bg-white">
+            <Utensils className="mx-auto mb-3 opacity-40" size={40} />
+            <p className="font-medium text-gray-500">Nothing here yet</p>
+            <p className="text-sm mt-1 mb-4">Be the first to share a meal or hack</p>
+            <Link href="/create">
+              <Button size="sm" className="rounded-full bg-orange-500 hover:bg-orange-600 text-white">
+                Share something
+              </Button>
+            </Link>
           </div>
-        </div>
+        ) : (
+          filteredFeed?.map((item, i) => (
+            <div
+              key={`${item.type}-${item.meal?.id || item.video?.id}`}
+              className="animate-in fade-in slide-in-from-bottom-4"
+              style={{ animationDelay: `${i * 50}ms`, animationFillMode: "both" }}
+            >
+              <FeedItemCard item={item} />
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
 
-        {/* Feed header + filters */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Community Feed</h2>
-          <div className="flex gap-1.5">
-            {(["all", "meals", "videos"] as const).map(f => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                  filter === f
-                    ? "bg-orange-500 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                {f === "all" ? "Everything" : f === "meals" ? "Meals" : "Hacks"}
-              </button>
-            ))}
-          </div>
-        </div>
+export default function Home() {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+
+      <main className="max-w-2xl mx-auto px-4 pt-4 pb-24">
+        {/* Link + file input hub */}
+        <LinkInputCard />
 
         {/* Feed */}
-        <div className="flex flex-col gap-5">
-          {isLoadingFeed ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-xl border bg-card shadow">
-                <div className="p-6">
-                  <Skeleton className="h-10 w-full mb-4" />
-                  <Skeleton className="h-48 w-full mb-4" />
-                  <Skeleton className="h-4 w-2/3" />
-                </div>
-              </div>
-            ))
-          ) : filteredFeed?.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground border border-dashed rounded-2xl bg-card/50">
-              <Utensils className="mx-auto mb-4 opacity-50" size={48} />
-              <p>Nothing here yet.</p>
-              <p className="text-sm mt-1">Be the first to share a meal or hack!</p>
-              <Link href="/create">
-                <Button className="mt-4 rounded-full bg-orange-500 hover:bg-orange-600">
-                  Share something
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            filteredFeed?.map((item, i) => (
-              <div
-                key={`${item.type}-${item.meal?.id || item.video?.id}`}
-                className="animate-in fade-in slide-in-from-bottom-4"
-                style={{ animationDelay: `${i * 60}ms`, animationFillMode: "both" }}
-              >
-                <FeedItemCard item={item} />
-              </div>
-            ))
-          )}
-        </div>
+        <FeedSection />
       </main>
+
+      {/* Floating add button */}
+      <Link href={isAuthenticated ? "/create" : "/login"}>
+        <button className="fixed bottom-20 right-5 z-40 w-14 h-14 rounded-full bg-indigo-500 hover:bg-indigo-600 active:scale-95 transition-all shadow-lg shadow-indigo-200 flex items-center justify-center text-white">
+          <Plus size={26} strokeWidth={2.5} />
+        </button>
+      </Link>
     </div>
   );
 }
