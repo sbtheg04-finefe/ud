@@ -1,0 +1,51 @@
+# Version control
+.git
+.gitignore
+
+# Node modules (will be installed fresh in Docker)
+node_modules
+**/node_modules
+
+# Build outputs (will be built fresh in Docker)
+**/dist
+**/build
+
+# Replit-specific
+.replit
+replit.nix
+.upm
+.cache
+
+# Local dev files
+.env
+.env.*
+*.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor directories
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test/coverage output
+coverage
+.nyc_output
+
+# Mockup sandbox (not needed for production)
+artifacts/mockup-sandbox
+
+# Agent memory
+.agents
+.local
+
+# Attached assets (referenced via storage in prod)
+attached_assets
