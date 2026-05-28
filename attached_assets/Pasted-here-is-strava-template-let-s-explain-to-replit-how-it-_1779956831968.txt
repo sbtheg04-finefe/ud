@@ -1,0 +1,169 @@
+here is strava template. let's explain to replit how it can in context make some changes to be about our niche yet similar so it can build out
+
+Yes — the right move is to tell Replit to use Strava as a **UI behavior reference**, not as the product concept. The product should keep Strava’s calm mobile structure, bottom-nav rhythm, card spacing, action-first flows, and challenge/community layout, but it must be reskinned and reworded for your niche so it feels familiar without feeling like a clone. [1][2]
+
+The clearest translation is: Strava’s “activity + progress + groups + record” becomes your niche’s “intake + progress + matches + action.” The biggest thing to communicate to Replit is that we want the same mobile-native confidence and progression cues, but centered around your problem angle, not fitness. [1][2]
+
+## Core translation
+
+Tell Replit this:
+
+Build a mobile-first app inspired by Strava’s **layout language**, but for our niche. Keep the same sense of momentum, progress, guided setup, challenges/groups, and one strong central action button, but replace fitness concepts with our niche concepts. [1][3]
+
+UI references from Strava:
+- Bottom navigation with 5 items and one highlighted current tab. [1][3]
+- Clean white background, soft gray cards, orange CTA color, black text, rounded corners. [1][4]
+- Large central action button for the app’s primary use case. [5]
+- Progress tab with weekly activity summaries, lightweight charts, and “see more” expansion. [3]
+- Group / challenge section that makes participation feel active and social. [6][7]
+
+## How to map it
+
+If your niche is the overwhelmed-family / executor / transition-help angle, map the Strava screens like this:
+
+| Strava pattern | Our niche version |
+|---|---|
+| Home feed [1] | Situation dashboard: “What do you need help with right now?” |
+| Record button [5] | Start intake / Start plan / Get matched |
+| Progress tab [3] | Transition progress: steps completed, tasks remaining, property status |
+| Groups tab [6][7] | Support circles / provider groups / guided challenge-style checklists |
+| Focus modal [2] | “What is your situation?” modal: estate clearing, downsizing, preparing for sale, helping a parent move |
+| Sports filter [8] | Need filter: cleanout, donation, sale prep, organizing, movers, storage, legal/admin support |
+
+## What Replit should preserve
+
+Tell Replit to preserve these **interaction qualities**:
+
+- The app should feel encouraging, not heavy.
+- The user should always see the next step.
+- Every page should have one obvious main action.
+- Cards should be stacked and scannable.
+- The product should feel mobile-native first, not desktop squeezed into a phone.
+- Bottom navigation must stay persistent.
+- Use short labels, high contrast, soft rounded modules, and orange as the primary action color. [1][3][5]
+
+Also tell it to preserve Strava’s use of:
+- setup nudges,
+- progress reinforcement,
+- challenge/community energy,
+- modal-based quick decisions,
+- central action button as the product heartbeat. [1][2][6]
+
+## What should change
+
+Tell Replit very clearly: **do not build a fitness app clone.** Use the visual and structural cues only.
+
+Replace:
+- workouts → guided plans
+- activities → tasks or cases
+- groups → support networks or provider circles
+- challenges → transition milestones
+- record → start intake / start case / request help
+- focus → choose your current situation
+- sports filters → service-need filters [3][6][8]
+
+Language should become calmer and more empathetic:
+- “What’s your focus?” becomes “What are you dealing with right now?” [2]
+- “Record an activity” becomes “Start your plan” or “Request help now.” [1]
+- “Keep that momentum going!” becomes “You’re making progress” or “Here’s what to do next.” [4]
+
+## Suggested screen set
+
+Tell Replit to build these screens using the Strava reference structure:
+
+1. **Home**
+- top summary card,
+- onboarding checklist,
+- recommended next action,
+- recent updates,
+- floating action button. [1]
+
+2. **Plan / Progress**
+- weekly summary,
+- milestone tracker,
+- remaining tasks,
+- expandable progress chart,
+- CTA to continue plan. [3]
+
+3. **Start / Record equivalent**
+- central large action screen,
+- choose situation type,
+- quick-intake modal,
+- route to next step. [5][8]
+
+4. **Groups / Support**
+- family circle,
+- provider options,
+- recommended support paths,
+- milestone-based challenge cards. [6][7]
+
+5. **You / Profile**
+- case type,
+- saved properties,
+- documents,
+- preferences,
+- status overview. [3]
+
+## Exact wording to give Replit
+
+Paste this:
+
+Use the attached Strava screenshots as a **mobile UI template reference only**, not as a product clone. I want the same clean, high-confidence mobile UX:
+- white background,
+- orange primary CTA,
+- rounded cards,
+- bottom navigation,
+- one central action button,
+- progress-driven screens,
+- onboarding nudges,
+- group/challenge style layouts.
+
+But the app is for our niche, not fitness.
+
+Translate the Strava structure into our niche:
+- Home = situation dashboard
+- Progress = case / transition progress
+- Record = start intake / get matched
+- Groups = support circles / provider network / milestone programs
+- Profile = user + case overview
+
+Use the “What’s your focus?” modal pattern as a “What are you dealing with right now?” selector.
+Use the sports filter screen pattern as a “What kind of help do you need?” selector.
+Use the progress chart pattern as a “steps completed / steps remaining” tracker.
+Use the groups and challenge cards as milestone-based support paths and provider/program cards.
+
+Do not use fitness wording, maps, routes, mileage, workouts, or exercise logic.
+Preserve the emotional feel: guided, motivating, lightweight, mobile-first, and action-oriented. [2][8][3][6]
+
+## Best niche wording
+
+If we keep this around the transition / estate / downsizing angle, tell Replit to use labels like:
+
+- Home
+- Plan
+- Start
+- Support
+- You
+
+And inside:
+- “What are you dealing with right now?”
+- “Help clearing a home”
+- “Preparing a property for sale”
+- “Helping a parent downsize”
+- “Executor support path”
+- “Recommended next step”
+- “You’re making progress”
+- “Get matched now”
+
+That keeps the same emotional usefulness Strava has, but pointed at your niche instead of exercise. [2][4]
+
+## My recommendation
+
+The strongest version is to ask Replit to build a **Strava-shaped transition concierge app**. That means:
+- Strava’s UX shell,
+- your niche’s emotional problem,
+- progress as relief,
+- groups as support,
+- central action as “get help now.” [5][6]
+
+If you want, I can now turn this into a single polished **Replit-ready master prompt** that tells it exactly what pages, labels, colors, and features to build from these screenshots.
