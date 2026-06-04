@@ -11,20 +11,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Home, Compass, PlusCircle, Users, BarChart2,
+  Home, Compass, PlusCircle, Users, BarChart2, Swords,
   Search, Bell, Settings, LogOut, UserCircle2,
   LayoutDashboard, Shield, Building2, Star, ChefHat,
 } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 
 const PAGE_TITLES: Record<string, string> = {
-  "/":          "Home",
-  "/videos":    "Discover",
-  "/create":    "Share",
-  "/groups":    "Circles",
-  "/battles":   "Circles",
-  "/dashboard": "You",
-  "/saved":     "Saved",
+  "/":           "Home",
+  "/battles":    "Challenges",
+  "/creators":   "Creators",
+  "/create":     "Share",
+  "/groups":     "Circles",
+  "/videos":     "Discover",
+  "/dashboard":  "You",
+  "/saved":      "Saved",
+  "/profile":    "Profile",
 };
 
 export function Navbar() {
@@ -38,10 +40,10 @@ export function Navbar() {
   )?.[1] ?? "PlatePair";
 
   const bottomTabs = [
-    { href: "/",        label: "Home",     icon: Home },
-    { href: "/videos",  label: "Discover", icon: Compass },
-    { href: "/groups",  label: "Circles",  icon: Users },
-    { href: "/dashboard", label: "You",    icon: BarChart2 },
+    { href: "/",          label: "Home",       icon: Home },
+    { href: "/battles",   label: "Challenges", icon: Swords },
+    { href: "/creators",  label: "Creators",   icon: Users },
+    { href: "/dashboard", label: "You",        icon: BarChart2 },
   ];
 
   return (

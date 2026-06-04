@@ -25,6 +25,7 @@ import JudgeScore from "@/pages/judge-score";
 import CreateGroup from "@/pages/create-group";
 import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
+import Creators from "@/pages/creators";
 import AdminDashboard from "@/pages/admin/index";
 import AdminHacks from "@/pages/admin/hacks";
 import AdminUsers from "@/pages/admin/users";
@@ -132,6 +133,7 @@ function Router() {
         <Route path="/groups/:groupId" component={GroupDetail} />
         <Route path="/meals/:mealId" component={MealDetail} />
         <Route path="/profile/:userId" component={Profile} />
+        <Route path="/creators" component={Creators} />
 
         {/* Other protected routes */}
         <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>

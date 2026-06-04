@@ -9,3 +9,4 @@ export * from "./profiles";
 export * from "./events";
 export * from "./social";
 export * from "./admin";
+export * from "./creator";
